@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"
+    />
+    <title>京津冀新一代大气环境智能模型系统（NEXT+） v1.0</title>
+    <link rel="stylesheet" href="./assets/styles/common.css" />
+    <style>
+      body {
+        font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+        background: linear-gradient(
+          135deg,
+          #0a0e1a 0%,
+          #1a1f35 50%,
+          #0f1419 100%
+        );
+        color: #ffffff;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        position: relative;
+      }
+
+      #map-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      #map-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(10, 30, 60, 1);
+        transition: all 0.3s;
+        z-index: 5;
+      }
+
+      #map-overlay img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .hidden-overlay {
+        opacity: 0;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      #threeDFrame {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+        /* opacity: 0.4; */
+        /* 60% 透明度 */
+      }
+
+      .app-title {
+        position: absolute;
+        top: 32px;
+        left: 40px;
+        width: auto;
+        /* max-width: 600px; */
+        text-align: left;
+        font-size: 3rem;
+        color: #00cfff;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-shadow: 0 0 12px #00cfff88;
+        z-index: 11;
+      }
+
+      #login-panel {
+        position: absolute;
+        top: 50%;
+        right: 5%;
+        transform: translateY(-50%);
+        width: 400px;
+        height: auto;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #0a1f3a 0%, #003366 100%);
+        box-shadow: 0 0 24px 0 rgba(0, 238, 255, 0.12);
+        border-radius: 16px;
+        z-index: 10;
+        /* opacity: 0.6; */
+      }
+
+      .login-box {
+        width: 100%;
+        background: rgba(10, 30, 60, 0.92);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 238, 255, 0.18);
+        padding: 32px 28px 24px 28px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .login-title {
+        color: #00cfff;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 28px;
+        letter-spacing: 2px;
+        text-shadow: 0 0 12px #00cfff88;
+      }
+
+      .form-group {
+        width: 100%;
+        margin-bottom: 22px;
+      }
+
+      .form-group label {
+        color: #8ad6ff;
+        font-size: 1.4rem;
+        margin-bottom: 6px;
+        display: block;
+        text-align: left;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid #00cfff;
+        background: #0a1f3a;
+        color: #fff;
+        font-size: 1rem;
+        outline: none;
+        margin-top: 2px;
+        transition: border-color 0.2s;
+      }
+
+      .form-group input:focus {
+        border-color: #00eeff;
+      }
+
+      .login-btn {
+        width: 100%;
+        padding: 12px 0;
+        background: linear-gradient(90deg, #00cfff 0%, #0055ff 100%);
+        color: #fff;
+        font-size: 1.5rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px #00cfff44;
+        cursor: pointer;
+        margin-top: 10px;
+        letter-spacing: 1px;
+        transition: background 0.2s;
+      }
+
+      .login-btn:hover {
+        background: linear-gradient(90deg, #00eeff 0%, #0077ff 100%);
+      }
+      video{
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+      }
+      video:focus {
+        outline:none;
+      }
+    </style>
+    <!-- <script src="./utils/qs.js"></script>
+    <script src="./utils/axios.min.js"></script>
+    <script src="./libs/request_ue4.js"></script> -->
+  </head>
+
+  <body>
+    <div id="map-container">
+      <video  width="100%" height="100%" autoplay muted>
+        <source src="./assets/video/loginVideo.mp4" type="video/mp4"></source>
+      </video>
+      <!-- <div id="map-overlay">
+        <img src="./assets/images/LoginBg.png" alt="" />
+      </div> -->
+      <!-- <iframe id="threeDFrame" src="/ueWeb/#/index" frameborder="0"></iframe> -->
+    </div>
+
+    <div class="app-title">京津冀新一代大气环境智能模型系统（NEXT+） v1.0</div>
+    <div id="login-panel">
+      <div class="login-box">
+        <h2 class="login-title">系统登录</h2>
+        <form>
+          <div
+            class="form-group"
+            style="display: flex; align-items: center; gap: 12px"
+          >
+            <label
+              for="username"
+              style="margin-bottom: 0; min-width: 70px; text-align: right"
+              >用户名</label
+            >
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="请输入用户名"
+              required
+            />
+          </div>
+          <div
+            class="form-group"
+            style="display: flex; align-items: center; gap: 12px"
+          >
+            <label
+              for="password"
+              style="margin-bottom: 0; min-width: 70px; text-align: right"
+              >密&nbsp;&nbsp;&nbsp;码</label
+            >
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="请输入密码"
+              required
+            />
+          </div>
+        </form>
+        <button
+          class="login-btn"
+          onclick="window.location.href='index.html'"
+        >
+          登录
+        </button>
+      </div>
+    </div>
+  </body>
+
+  <!-- <script>
+    /**
+     * 获取浏览器分辨率信息
+     * @returns {Object} 包含视口尺寸和屏幕尺寸的对象
+     */
+    function getBrowserResolution() {
+      // 视口尺寸（当前可见区域，含滚动条，不含浏览器工具栏）
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      // 视口尺寸（不含滚动条，兼容性稍好）
+      const viewportClientWidth = document.documentElement.clientWidth;
+      const viewportClientHeight = document.documentElement.clientHeight;
+
+      // 屏幕整体尺寸（设备物理分辨率，不受窗口大小影响）
+      const screenWidth = screen.width;
+      const screenHeight = screen.height;
+
+      // 屏幕可用尺寸（扣除系统任务栏等）
+      const screenAvailWidth = screen.availWidth;
+      const screenAvailHeight = screen.availHeight;
+
+      return {
+        viewport: {
+          width: viewportWidth, // 含滚动条的视口宽度
+          height: viewportHeight, // 含滚动条的视口高度
+          clientWidth: viewportClientWidth, // 不含滚动条的视口宽度
+          clientHeight: viewportClientHeight, // 不含滚动条的视口高度
+        },
+        screen: {
+          width: screenWidth, // 屏幕物理宽度
+          height: screenHeight, // 屏幕物理高度
+          availWidth: screenAvailWidth, // 屏幕可用宽度（不含任务栏等）
+          availHeight: screenAvailHeight, // 屏幕可用高度（不含任务栏等）
+        },
+      };
+    }
+    function load3DFrame() {
+      var threeDFrame = document.getElementById("threeDFrame");
+      if (threeDFrame) {
+        threeDFrame.onload = function () {
+          if (!threeDFrame.contentWindow) {
+            console.warn("3d iframe loaded, but no contentWindow.");
+            return;
+          }
+          if (threeDFrame.contentWindow.ue4Api) {
+            console.log("3d iframe loaded, ue4Api is available.");
+            if (!window.ue4Api)
+              window.ue4Api = threeDFrame.contentWindow.ue4Api;
+          }
+          let resolution = getBrowserResolution();
+          console.log("Browser Resolution:", resolution);
+          setTimeout(async () => {
+            // await test_3d_map();
+            set3DDynamicResolution(
+              resolution.viewport.clientWidth,
+              resolution.viewport.clientHeight
+            );
+            // set3DDynamicResolution(2000, 1000);
+            await set_view();
+          }, 500);
+        };
+      }
+    }
+    load3DFrame();
+
+    function set3DDynamicResolution(width, height) {
+      if (window.ue4Api.DynamicResolutionFun) {
+        window.ue4Api.DynamicResolutionFun({ width, height });
+      }
+    }
+
+    function switch3DView(wind, zhuzhuang, threeD, jinjingji) {
+      if (window.ue4Api.SwitchFun) {
+        console.log("call Switch:", new Date().toISOString());
+        window.ue4Api.SwitchFun({
+          wind,
+          zhuzhuang,
+          threeD,
+          jinjingji,
+        });
+      }
+    }
+
+    function setTheAreaScope(gridInfo) {
+      if (window.ue4Api.SetTheAreaScopeFun) {
+        window.ue4Api.SetTheAreaScopeFun(gridInfo);
+      }
+    }
+
+    async function draw3DBar(pollutant_name, time_point, layer) {
+      // var pollutant_name = "PM25_OC";
+      // var time_point = "2024-10-25 00:00:00";
+      var file_path = await fetch_nc_file(
+        pollutant_name,
+        time_point,
+        layer,
+        null,
+        null,
+        "DrawPollutantBarChartJsonFun"
+      );
+      if (window.ue4Api.DrawPollutantBarChartJsonFun) {
+        window.ue4Api.DrawPollutantBarChartJsonFun(
+          `D:\\GiveDemo\\app\\${file_path.replace(/\//g, "\\")}`
+        );
+      }
+    }
+
+    async function test_3d_map() {
+      var gridInfo_jjj = {
+        Rows: 273,
+        Cols: 292,
+        Corners: {
+          UpperLeft: {
+            Row: 0,
+            Col: 0,
+            Lat: 33.630573,
+            Lon: 108.602966,
+          },
+          UpperRight: {
+            Row: 0,
+            Col: 291,
+            Lat: 32.028191,
+            Lon: 124.734283,
+          },
+          LowerLeft: {
+            Row: 272,
+            Col: 0,
+            Lat: 44.836433,
+            Lon: 109.170135,
+          },
+          LowerRight: {
+            Row: 272,
+            Col: 291,
+            Lat: 43.008533,
+            Lon: 127.743774,
+          },
+        },
+      };
+      setTheAreaScope(gridInfo_jjj);
+
+      var pollutant_name = "PM25_TOT";
+      var time_point = "2024-10-25 00:00:00";
+      var layer = 0;
+      await draw3DBar(pollutant_name, time_point, layer);
+
+      set_view();
+    }
+    function hide_overlay() {
+      var overlay = document.getElementById("map-overlay");
+      if (overlay) {
+        overlay.classList.add("hidden-overlay");
+      }
+    }
+    async function set_view() {
+      await switch3DView(0, 0, 0, 0);
+      setTimeout(() => {
+        hide_overlay();
+        switch3DView(0, 0, 0, 1);
+      }, 1500);
+    }
+  </script> -->
+</html>

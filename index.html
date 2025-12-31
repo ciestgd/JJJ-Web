@@ -1,0 +1,2423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>京津冀新一代大气环境智能模型系统（NEXT+）</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Microsoft YaHei", Arial, sans-serif;
+        background: linear-gradient(
+          135deg,
+          #0a0a0a 0%,
+          #1a1a2e 50%,
+          #16213e 100%
+        );
+        overflow: hidden;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .dashboard-container {
+        width: 100%;
+        height: 100vh;
+        position: relative;
+        background: url("./assets/images/bg/bg1.png") center/cover no-repeat;
+        overflow: hidden;
+      }
+
+      /* 中间科技感图背景 - 占据1/3空间并上下铺满 */
+      /* .tech-background {
+            position: absolute;
+            top: 33.33%;
+            left: 0;
+            width: 100%;
+            height: 33.33%;
+            background: url('bg4.png') center/cover no-repeat;
+            background-blend-mode: overlay;
+            opacity: 0.8;
+            z-index: 1;
+        }
+
+        .tech-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg,
+                    rgba(0, 212, 255, 0.1) 0%,
+                    rgba(138, 43, 226, 0.1) 25%,
+                    rgba(0, 212, 255, 0.1) 50%,
+                    rgba(138, 43, 226, 0.1) 75%,
+                    rgba(0, 212, 255, 0.1) 100%);
+            animation: techGradient 8s ease-in-out infinite;
+        } */
+
+      @keyframes techGradient {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+
+        50% {
+          opacity: 0.6;
+        }
+      }
+
+      /* 系统头部 */
+      .system-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 120px;
+        z-index: 1000;
+        background: url("./assets/images/bg/刘海.png") center/contain no-repeat;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .menu-container {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        padding: 0 30px;
+      }
+
+      /* 左侧菜单 */
+      .left-menu {
+        flex: 1;
+        display: flex;
+        gap: 1px;
+        /* justify-content: flex-end; */
+        padding-left: 100px;
+      }
+
+      .menu-item {
+        background: url("./assets/images/bg/菜单栏.png") center/contain
+          no-repeat;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 28px;
+        text-align: center;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+      }
+
+      /* 菜单文本向上移动5px */
+      .menu-item span {
+        transform: translateY(-10px);
+      }
+
+      .menu-item:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.2);
+      }
+
+      /* 子菜单容器 */
+      .submenu-container {
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.9);
+        border: 2px solid rgba(0, 212, 255, 0.5);
+        border-radius: 10px;
+        padding: 15px 10px;
+        min-width: 200px;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 1001;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+      }
+
+      .menu-item:hover .submenu-container {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(10px);
+      }
+
+      /* 子菜单项样式 */
+      .submenu-item {
+        display: block;
+        color: #ffffff;
+        text-decoration: none;
+        padding: 12px 20px;
+        margin: 5px 0;
+        border-radius: 8px;
+        text-align: center;
+        transition: all 0.3s ease;
+        font-size: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 212, 255, 0.05);
+      }
+
+      .submenu-item:hover {
+        background: rgba(0, 212, 255, 0.2);
+        border-color: rgba(0, 212, 255, 0.6);
+        transform: translateX(5px);
+        color: #00ff88;
+        text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+      }
+
+      .submenu-item:first-child {
+        margin-top: 0;
+      }
+
+      .submenu-item:last-child {
+        margin-bottom: 0;
+      }
+
+      /* 右侧菜单 */
+      .right-menu {
+        flex: 1;
+        display: flex;
+        gap: 1px;
+        justify-content: flex-end;
+        padding-right: 100px;
+      }
+
+      .right-menu .menu-item {
+        background: url("./assets/images/bg/菜单栏右侧.png") center/cover
+          no-repeat;
+      }
+
+      /* 隐藏系统管理菜单项 */
+      /*        .right-menu .menu-item:nth-child(3) {
+            display: none !important;
+        }
+        .left-menu .menu-item:nth-child(1) {
+                display: none !important;
+        }*/
+
+      /* 左侧菜单高度错位效果 */
+      .left-menu .menu-item:nth-child(1) {
+        margin-top: 10px;
+      }
+
+      .left-menu .menu-item:nth-child(2) {
+        margin-top: 40px;
+      }
+
+      .left-menu .menu-item:nth-child(3) {
+        margin-top: 70px;
+      }
+
+      /* 右侧菜单高度错位效果 */
+      .right-menu .menu-item:nth-child(1) {
+        margin-top: 50px;
+      }
+
+      .right-menu .menu-item:nth-child(2) {
+        margin-top: 20px;
+      }
+
+      .right-menu .menu-item:nth-child(3) {
+        margin-top: 10px;
+      }
+
+      /* 用户信息 */
+      .user-info {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        padding: 8px 16px;
+        color: #ffffff;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        backdrop-filter: blur(5px);
+      }
+
+      .user-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #00d4ff, #ffffff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: bold;
+      }
+
+      /* 系统标题居中 */
+      .system-title-wrapper {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        z-index: 3;
+      }
+
+      .header-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url("./assets/images/bg/刘海.png") center/contain no-repeat;
+        opacity: 0.9;
+      }
+
+      .system-title {
+        position: relative;
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #ffffff;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        letter-spacing: 2px;
+        z-index: 10;
+        background: linear-gradient(45deg, #00d4ff, #ffffff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+      }
+
+      @keyframes titleGlow {
+        from {
+          text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+        }
+
+        to {
+          text-shadow: 0 0 30px rgba(0, 212, 255, 1),
+            0 0 40px rgba(0, 212, 255, 0.6);
+        }
+      }
+
+      /* 主容器 */
+      .main-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 50px;
+      }
+
+      /* 左侧面板 */
+      .left-panel {
+        position: absolute;
+        left: 10px;
+        top: 10%;
+        /* transform: translateY(-50%); */
+        width: 30%;
+        height: 90%;
+        /* background: #061231; */
+        /*rgba(0, 0, 0, 0.7);*/
+        /* border: 2px solid rgba(0, 212, 255, 0.5); */
+        border-radius: 15px;
+        padding: 20px 15px;
+        display: flex;
+        flex-direction: column;
+        z-index: 15;
+        backdrop-filter: blur(10px);
+        /* box-shadow: 0 0 30px rgba(0, 212, 255, 0.3); */
+      }
+
+      .panel-title {
+        color: #00d4ff;
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        text-shadow: 0 0 15px rgba(0, 212, 255, 0.8);
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+      }
+
+      .panel-items-container {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        height: 90%;
+      }
+
+      .panel-items-box {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 16px;
+        height: 32%;
+      }
+
+      .panel-items-box-left {
+        width: 80%;
+        height: 100%;
+      }
+
+      .panel-items-box-right {
+        flex: 1;
+      }
+
+      .panel-item {
+        height: 100%;
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 10px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .panel-item:hover,
+      .panel-item.active {
+        background: rgba(0, 212, 255, 0.2);
+        border-color: rgba(0, 212, 255, 0.8);
+        box-shadow: 0 0 25px rgba(0, 212, 255, 0.7);
+        transform: scale(1.05);
+      }
+
+      .panel-item.active .panel-item-title {
+        color: #00ff88;
+        text-shadow: 0 0 15px rgba(0, 255, 136, 0.8);
+      }
+
+      .panel-item-title {
+        color: #ffffff;
+        font-size: 1.1rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 12px;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      }
+
+      .panel-item-image {
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 212, 255, 0.3);
+      }
+
+      /* 右侧面板 */
+      .right-panel {
+        position: absolute;
+        right: 10px;
+        top: 10%;
+        /* transform: translateY(-50%); */
+        width: 30%;
+        height: 90%;
+        /* background: rgba(0, 0, 0, 0.7); */
+        /* border: 2px solid rgba(255, 215, 0, 0.5); */
+        border-radius: 15px;
+        padding: 20px 15px;
+        display: flex;
+        flex-direction: column;
+        /*            gap: 15px;*/
+        z-index: 15;
+        backdrop-filter: blur(10px);
+        /* box-shadow: 0 0 30px rgba(255, 215, 0, 0.3); */
+      }
+
+      /* 确保左右面板的标题间距完全一致 */
+      .left-panel .panel-title,
+      .right-panel .panel-title {
+        color: #00d4ff;
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        text-shadow: 0 0 15px rgba(0, 212, 255, 0.8);
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+      }
+
+      .right-panel .panel-item {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        /* background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3); */
+      }
+
+      .right-panel .panel-item:hover,
+      .right-panel .panel-item.active {
+        background: rgba(0, 212, 255, 0.2);
+        border-color: rgba(0, 212, 255, 0.8);
+        box-shadow: 0 0 25px rgba(0, 212, 255, 0.7);
+        transform: scale(1.05);
+        /* background: rgba(255, 215, 0, 0.2);
+            border-color: rgba(255, 215, 0, 0.8);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); */
+      }
+
+      .right-panel .panel-item.active .panel-item-title {
+        color: #00ff88;
+        text-shadow: 0 0 15px rgba(0, 255, 136, 0.8);
+      }
+
+      .right-panel .panel-item-title {
+        color: #ffffff;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        /* text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); */
+      }
+
+      /* 底座区域 */
+      .base-section {
+        position: absolute;
+        bottom: 10%;
+        width: 100%;
+        height: 250px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10;
+      }
+
+      .base-container {
+        position: relative;
+        width: 1000px;
+        height: 500px;
+      }
+
+      .base-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.5));
+      }
+
+      /* 模型logo图片 */
+      .model-logos-images {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 1200px;
+        height: 600px;
+        pointer-events: none;
+      }
+
+      .model-logo-wrapper {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .model-logo-image {
+        width: 110px;
+        height: 110px;
+        object-fit: contain;
+        filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.6));
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .model-logo-image:hover {
+        filter: drop-shadow(0 0 25px rgba(0, 212, 255, 1));
+        transform: scale(1.1);
+      }
+
+      /* 模型logo高亮效果 */
+      .model-logo-wrapper.active .model-logo-image {
+        filter: drop-shadow(0 0 30px rgba(0, 212, 255, 1));
+        transform: scale(1.15);
+        border: 1px solid (0, 212, 255, 0.8);
+      }
+
+      .model-logo-wrapper.active .model-logo-text {
+        color: #ffffff;
+        text-shadow: 0 0 20px rgba(0, 212, 255, 1);
+        transform: scale(1.1);
+      }
+
+      .model-logo-text {
+        color: #f9f9f9;
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-shadow: 0 0 14px rgba(0, 212, 255, 0.8);
+        text-align: center;
+        bottom: -10px;
+      }
+
+      .model-logo-wrapper.meteorological {
+        bottom: 16%;
+        left: 15%;
+      }
+
+      .model-logo-wrapper.emission {
+        bottom: 16%;
+        right: 15%;
+      }
+
+      .model-logo-wrapper.chemical {
+        bottom: 8%;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      /* 箭头汇聚效果 */
+      .arrows-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .arrow {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+        animation: arrowMove 4s ease-in-out infinite;
+      }
+
+      @keyframes arrowMove {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+          opacity: 0.6;
+        }
+
+        50% {
+          transform: translate(var(--move-x, 0), var(--move-y, -200px))
+            scale(1.2);
+          opacity: 1;
+        }
+      }
+
+      .arrow.meteorological {
+        top: 25%;
+        left: 20%;
+        --move-x: 150px;
+        --move-y: -250px;
+        animation-delay: 0s;
+      }
+
+      .arrow.emission {
+        top: 25%;
+        right: 20%;
+        --move-x: -150px;
+        --move-y: -250px;
+        animation-delay: 1.3s;
+      }
+
+      .arrow.chemical {
+        bottom: 30%;
+        left: 50%;
+        transform: translateX(-50%);
+        --move-x: 0;
+        --move-y: -300px;
+        animation-delay: 2.6s;
+      }
+
+      /* 光线汇聚效果 */
+      .light-beams {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .light-beam {
+        position: absolute;
+        width: 3px;
+        height: 0;
+        background: linear-gradient(
+          to top,
+          rgba(0, 212, 255, 0.8),
+          rgba(0, 212, 255, 0)
+        );
+        transform-origin: bottom;
+        animation: beamGrow 3s ease-in-out infinite;
+      }
+
+      @keyframes beamGrow {
+        0%,
+        100% {
+          height: 0;
+          opacity: 0;
+        }
+
+        50% {
+          height: 350px;
+          opacity: 1;
+        }
+      }
+
+      .light-beam:nth-child(1) {
+        bottom: 180px;
+        left: 200px;
+        animation-delay: 0s;
+      }
+
+      .light-beam:nth-child(2) {
+        bottom: 180px;
+        right: 200px;
+        animation-delay: 1s;
+      }
+
+      .light-beam:nth-child(3) {
+        bottom: 160px;
+        left: 50%;
+        transform: translateX(-50%);
+        animation-delay: 2s;
+      }
+
+      /* 文字标签 */
+      .model-logos {
+        position: absolute;
+        top: -120px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 700px;
+        height: 100px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 10;
+      }
+
+      .model-logo {
+        width: 180px;
+        height: 100px;
+        background: rgba(0, 212, 255, 0.1);
+        border: 2px solid rgba(0, 212, 255, 0.3);
+        border-radius: 15px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #00d4ff;
+        font-size: 1.2rem;
+        font-weight: bold;
+        text-align: center;
+        animation: logoRotate 10s linear infinite;
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+      }
+
+      @keyframes logoRotate {
+        0%,
+        33.33% {
+          opacity: 1;
+          transform: scale(1);
+        }
+
+        33.34%,
+        66.66% {
+          opacity: 0;
+          transform: scale(0.8);
+        }
+
+        66.67%,
+        100% {
+          opacity: 0;
+          transform: scale(0.8);
+        }
+      }
+
+      .model-logo:nth-child(2) {
+        animation-delay: 3.33s;
+      }
+
+      .model-logo:nth-child(3) {
+        animation-delay: 6.66s;
+      }
+
+      /* 球体区域 */
+      .sphere-section {
+        position: absolute;
+        top: 55%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 800px;
+        height: 800px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 5;
+      }
+
+      .sphere-container {
+        position: relative;
+        width: 500px;
+        height: 500px;
+      }
+
+      .sphere-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        animation: sphereFloat 4s ease-in-out infinite;
+      }
+
+      @keyframes sphereFloat {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      .sphere-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 1.8rem;
+        font-weight: bold;
+        text-align: center;
+        line-height: 1.4;
+        text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+        z-index: 10;
+      }
+
+      /* 球体到场景应用的光线汇聚 */
+      .sphere-beams {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 6;
+      }
+
+      .sphere-beam {
+        position: absolute;
+        width: 4px;
+        height: 0;
+        background: linear-gradient(
+          to top,
+          rgba(255, 215, 0, 0),
+          rgba(7, 218, 246, 0.872)
+        );
+        transform-origin: bottom;
+        animation: sphereBeamGrow 3s ease-in-out infinite;
+      }
+
+      @keyframes sphereBeamGrow {
+        0%,
+        100% {
+          height: 0;
+          opacity: 0;
+        }
+
+        50% {
+          height: 400px;
+          opacity: 1;
+        }
+      }
+
+      .sphere-beam:nth-child(1) {
+        bottom: 350px;
+        left: 45%;
+        animation-delay: 0s;
+      }
+
+      .sphere-beam:nth-child(2) {
+        bottom: 350px;
+        right: 45%;
+        animation-delay: 1s;
+      }
+
+      .sphere-beam:nth-child(3) {
+        bottom: 330px;
+        left: 50%;
+        transform: translateX(-50%);
+        animation-delay: 2s;
+      }
+
+      /* 光线聚焦效果 */
+      .light-beam {
+        position: absolute;
+        width: 2px;
+        height: 100px;
+        background: linear-gradient(
+          to top,
+          rgba(0, 212, 255, 0),
+          rgba(0, 212, 255, 0.8)
+        );
+        transform-origin: bottom;
+        animation: beamPulse 2s ease-in-out infinite;
+      }
+
+      .light-beam:nth-child(1) {
+        left: 20%;
+        animation-delay: 0s;
+      }
+
+      .light-beam:nth-child(2) {
+        left: 50%;
+        animation-delay: 0.5s;
+      }
+
+      .light-beam:nth-child(3) {
+        left: 80%;
+        animation-delay: 1s;
+      }
+
+      @keyframes beamPulse {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* 光圈区域 */
+      .ring-section {
+        position: absolute;
+        top: 22%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 900px;
+        height: 220px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 8;
+      }
+
+      .ring-container {
+        position: relative;
+        width: 700px;
+        height: 180px;
+      }
+
+      .ring-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        /* 移除旋转动画，保持固定不动 */
+      }
+
+      .ring-text {
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #00d4ff;
+        font-size: 1.8rem;
+        font-weight: bold;
+        text-shadow: 0 0 15px rgba(0, 212, 255, 0.8);
+        z-index: 10;
+      }
+
+      .scenario-apps {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 500px;
+        height: 100px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+      }
+
+      .scenario-app {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 30px;
+        padding: 15px 25px;
+        color: #00d4ff;
+        font-size: 1.3rem;
+        font-weight: bold;
+        text-align: center;
+        animation: appRotate 8s linear infinite;
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+      }
+
+      @keyframes appRotate {
+        0%,
+        33.33% {
+          opacity: 1;
+          transform: scale(1);
+        }
+
+        33.34%,
+        66.66% {
+          opacity: 0.5;
+          transform: scale(0.9);
+        }
+
+        66.67%,
+        100% {
+          opacity: 0.5;
+          transform: scale(0.9);
+        }
+      }
+
+      .scenario-app:nth-child(2) {
+        animation-delay: 2.67s;
+      }
+
+      .scenario-app:nth-child(3) {
+        animation-delay: 5.33s;
+      }
+
+      /* 聚焦光圈 */
+      .focus-ring {
+        position: absolute;
+        top: 5%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 800px;
+        height: 300px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9;
+      }
+
+      .focus-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.6));
+        animation: focusPulse 3s ease-in-out infinite;
+      }
+
+      @keyframes focusPulse {
+        0%,
+        100% {
+          transform: scale(1);
+          filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.6));
+        }
+
+        50% {
+          transform: scale(1.05);
+          filter: drop-shadow(0 0 35px rgba(255, 215, 0, 0.9));
+        }
+      }
+
+      /* 响应式设计 */
+      /* 响应式设计 */
+      @media (max-width: 1200px) {
+        .system-header {
+          height: 100px;
+        }
+
+        .system-title {
+          font-size: 2rem;
+        }
+
+        .tech-background {
+          height: 30%;
+          top: 35%;
+        }
+
+        .left-panel {
+          width: 240px;
+          height: 500px;
+          left: 30px;
+        }
+
+        .right-panel {
+          width: 240px;
+          height: 500px;
+          right: 30px;
+        }
+
+        .focus-ring {
+          top: 110px;
+          width: 350px;
+          height: 90px;
+        }
+
+        .ring-section {
+          top: 25%;
+          width: 750px;
+          height: 180px;
+        }
+
+        .ring-container {
+          width: 600px;
+          height: 150px;
+        }
+
+        .ring-text {
+          font-size: 1.6rem;
+        }
+
+        .scenario-apps {
+          width: 450px;
+        }
+
+        .scenario-app {
+          font-size: 1.1rem;
+          padding: 12px 20px;
+        }
+
+        .sphere-section {
+          width: 500px;
+          height: 500px;
+        }
+
+        .sphere-container {
+          width: 350px;
+          height: 350px;
+        }
+
+        .sphere-text {
+          font-size: 1.5rem;
+        }
+
+        .base-container {
+          width: 800px;
+          height: 400px;
+        }
+
+        .model-logos-images {
+          width: 1000px;
+          height: 500px;
+        }
+
+        .model-logo-image {
+          width: 120px;
+          height: 120px;
+        }
+
+        .model-logo-wrapper {
+          gap: 8px;
+        }
+
+        .model-logo-text {
+          font-size: 1rem;
+        }
+
+        .panel-item-image {
+          height: 100px;
+        }
+
+        .ring-image {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .system-header {
+          height: 80px;
+        }
+
+        .system-title {
+          font-size: 1.5rem;
+        }
+
+        .tech-background {
+          height: 25%;
+          top: 38%;
+        }
+
+        /* 侧边面板调整 */
+        .left-panel {
+          width: 200px;
+          height: 400px;
+          left: 20px;
+          padding: 15px;
+        }
+
+        .right-panel {
+          width: 200px;
+          height: 400px;
+          right: 20px;
+          padding: 15px;
+        }
+
+        .panel-title {
+          font-size: 1.1rem;
+          margin-bottom: 8px;
+        }
+
+        .panel-item {
+          padding: 10px;
+        }
+
+        .panel-item-title {
+          font-size: 0.9rem;
+          margin-bottom: 8px;
+        }
+
+        .panel-item-image {
+          height: 80px;
+        }
+
+        /* 聚焦光圈调整 */
+        .focus-ring {
+          top: 95px;
+          width: 280px;
+          height: 70px;
+        }
+
+        /* 光圈区域调整 */
+        .ring-section {
+          top: 20%;
+          width: 550px;
+          height: 140px;
+        }
+
+        .ring-container {
+          width: 450px;
+          height: 100px;
+        }
+
+        .ring-text {
+          font-size: 1.2rem;
+        }
+
+        .scenario-apps {
+          width: 350px;
+        }
+
+        .scenario-app {
+          font-size: 0.9rem;
+          padding: 8px 14px;
+        }
+
+        /* 球体区域调整 */
+        .sphere-section {
+          width: 350px;
+          height: 350px;
+          top: 55%;
+        }
+
+        .sphere-container {
+          width: 250px;
+          height: 250px;
+        }
+
+        .sphere-text {
+          font-size: 1.1rem;
+        }
+
+        /* 底座区域调整 */
+        .base-section {
+          height: 160px;
+          bottom: 10%;
+        }
+
+        .base-container {
+          width: 400px;
+          height: 180px;
+        }
+
+        .model-logos-images {
+          width: 500px;
+          height: 300px;
+        }
+
+        .model-logo-image {
+          width: 100px;
+          height: 100px;
+        }
+
+        .model-logo-wrapper {
+          gap: 6px;
+        }
+
+        .model-logo-text {
+          font-size: 0.9rem;
+        }
+
+        .model-logo-wrapper.meteorological {
+          top: 15%;
+          left: 10%;
+        }
+
+        .model-logo-wrapper.emission {
+          top: 15%;
+          right: 10%;
+        }
+
+        .model-logo-wrapper.chemical {
+          bottom: 25%;
+          left: 50%;
+        }
+
+        /* 箭头和光线调整 */
+        .arrow {
+          width: 60px;
+          height: 60px;
+        }
+
+        .light-beam {
+          width: 2px;
+        }
+
+        .sphere-beam {
+          width: 3px;
+          height: 0;
+          background: linear-gradient(
+            to top,
+            rgba(255, 215, 0, 0.6),
+            rgba(255, 215, 0, 0)
+          );
+        }
+      }
+
+      @media (max-width: 480px) {
+        .system-header {
+          height: 60px;
+        }
+
+        .system-title {
+          font-size: 1.2rem;
+        }
+
+        .tech-background {
+          height: 20%;
+          top: 40%;
+        }
+
+        /* 侧边面板调整 - 移动设备布局 */
+        .left-panel {
+          width: 160px;
+          height: 350px;
+          left: 10px;
+          padding: 10px;
+          transform: translateY(-50%) translateY(-20px);
+        }
+
+        .right-panel {
+          width: 160px;
+          height: 350px;
+          right: 10px;
+          padding: 10px;
+          transform: translateY(-50%) translateY(-20px);
+        }
+
+        .panel-title {
+          font-size: 1rem;
+          margin-bottom: 6px;
+        }
+
+        .panel-item {
+          padding: 8px;
+        }
+
+        .panel-item-title {
+          font-size: 0.8rem;
+          margin-bottom: 5px;
+        }
+
+        .panel-item-image {
+          height: 60px;
+        }
+
+        /* 聚焦光圈调整 */
+        .focus-ring {
+          top: 70px;
+          width: 240px;
+          height: 60px;
+        }
+
+        /* 光圈区域调整 */
+        .ring-section {
+          top: 16%;
+          width: 420px;
+          height: 120px;
+        }
+
+        .ring-container {
+          width: 350px;
+          height: 90px;
+        }
+
+        .ring-text {
+          font-size: 1rem;
+        }
+
+        .scenario-apps {
+          width: 280px;
+        }
+
+        .scenario-app {
+          font-size: 0.8rem;
+          padding: 6px 12px;
+        }
+
+        /* 球体区域调整 */
+        .sphere-section {
+          width: 280px;
+          height: 280px;
+          top: 58%;
+        }
+
+        .sphere-container {
+          width: 200px;
+          height: 200px;
+        }
+
+        .sphere-text {
+          font-size: 0.9rem;
+          line-height: 1.2;
+        }
+
+        /* 底座区域调整 */
+        .base-section {
+          height: 140px;
+          bottom: 8%;
+        }
+
+        .base-container {
+          width: 350px;
+          height: 160px;
+        }
+
+        .model-logos-images {
+          width: 400px;
+          height: 250px;
+        }
+
+        .model-logo-image {
+          width: 80px;
+          height: 80px;
+        }
+
+        .model-logo-wrapper {
+          gap: 4px;
+        }
+
+        .model-logo-text {
+          font-size: 0.8rem;
+        }
+
+        .model-logo-wrapper.meteorological {
+          top: 10%;
+          left: 5%;
+        }
+
+        .model-logo-wrapper.emission {
+          top: 10%;
+          right: 5%;
+        }
+
+        .model-logo-wrapper.chemical {
+          bottom: 20%;
+          left: 50%;
+        }
+
+        /* 箭头和光线调整 */
+        .arrow {
+          width: 50px;
+          height: 50px;
+        }
+
+        .light-beam {
+          width: 2px;
+        }
+
+        .sphere-beam {
+          width: 2px;
+          background: linear-gradient(
+            to top,
+            rgba(255, 215, 0, 0.5),
+            rgba(255, 215, 0, 0)
+          );
+        }
+
+        /* 箭头动画参数调整 */
+        .arrow.meteorological {
+          --move-x: 120px;
+          --move-y: -200px;
+        }
+
+        .arrow.emission {
+          --move-x: -120px;
+          --move-y: -200px;
+        }
+
+        .arrow.chemical {
+          --move-x: 0;
+          --move-y: -250px;
+        }
+      }
+
+      /* AI悬浮按钮 */
+      .ai-fab-button {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(45deg, #00d4ff, #ff6b9d);
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+        transition: all 0.3s ease;
+        z-index: 1001;
+      }
+
+      .ai-fab-button:hover {
+        transform: scale(1.1) translateY(-5px);
+        box-shadow: 0 12px 35px rgba(0, 212, 255, 0.6);
+      }
+
+      .ai-fab-button:active {
+        transform: scale(0.95);
+      }
+
+      .ai-icon {
+        width: 30px;
+        height: 30px;
+        margin-bottom: 2px;
+      }
+
+      .ai-text {
+        color: #ffffff;
+        font-size: 0.7rem;
+        font-weight: bold;
+        text-align: center;
+        line-height: 1;
+      }
+
+      .ai-pulse {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: rgba(0, 212, 255, 0.3);
+        animation: aiPulse 2s ease-in-out infinite;
+      }
+
+      @keyframes aiPulse {
+        0% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+
+        100% {
+          transform: translate(-50%, -50%) scale(2);
+          opacity: 0;
+        }
+      }
+
+      .ai-chat-window {
+        position: fixed;
+        bottom: 120px;
+        right: 30px;
+        width: 380px;
+        height: 500px;
+        background: rgba(0, 0, 0, 0.9);
+        border: 2px solid rgba(0, 212, 255, 0.5);
+        border-radius: 15px;
+        display: none;
+        flex-direction: column;
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+      }
+
+      .ai-chat-header {
+        padding: 15px;
+        background: rgba(0, 212, 255, 0.1);
+        border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 15px 15px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .ai-chat-title {
+        color: #00d4ff;
+        font-size: 1.2rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .ai-close-button {
+        width: 25px;
+        height: 25px;
+        background: rgba(255, 0, 0, 0.3);
+        border: 1px solid rgba(255, 0, 0, 0.5);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #ffffff;
+        font-size: 1rem;
+      }
+
+      .ai-chat-content {
+        flex: 1;
+        padding: 15px;
+        overflow-y: auto;
+      }
+
+      .ai-message {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 10px;
+        color: #ffffff;
+      }
+
+      .ai-input-area {
+        padding: 15px;
+        border-top: 1px solid rgba(0, 212, 255, 0.3);
+        display: flex;
+        gap: 10px;
+      }
+
+      .ai-input {
+        flex: 1;
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: #ffffff;
+        font-size: 0.9rem;
+      }
+
+      .ai-send-button {
+        padding: 8px 15px;
+        background: linear-gradient(45deg, #00d4ff, #ff6b9d);
+        border: none;
+        border-radius: 8px;
+        color: #ffffff;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .ai-send-button:hover {
+        background: linear-gradient(45deg, #00b8e6, #ff5a8d);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="dashboard-container">
+      <!-- 中间科技感图背景 -->
+      <div class="tech-background"></div>
+
+      <!-- 左侧面板 -->
+      <div class="left-panel">
+        <div class="panel-title">集成模型</div>
+        <div class="panel-items-container">
+          <div class="panel-items-box">
+            <div class="panel-items-box-left">
+              <div class="panel-item" data-model="meteorological">
+                <!-- <div class="panel-item-title">气象模型</div> -->
+                <img
+                  src="./assets/images/echarts/气象模型new.png"
+                  alt="气象模型典型图"
+                  class="panel-item-image"
+                />
+              </div>
+            </div>
+            <div class="panel-items-box-right">
+              <div
+                data-model="meteorological"
+                class="menu-icon"
+                onclick="goTo('1')"
+              >
+                <div class="model-logo-text">气象模型</div>
+                <img
+                  src="./assets/images/bg/底座.png"
+                  alt="气象模型"
+                  class="model-logo-image"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-items-box">
+            <div class="panel-items-box-left">
+              <div class="panel-item" data-model="emission">
+                <!-- <div class="panel-item-title">排放模型</div> -->
+                <img
+                  src="./assets/images/echarts/排放模型.png"
+                  alt="排放模型典型图"
+                  class="panel-item-image"
+                />
+              </div>
+            </div>
+            <div class="panel-items-box-right">
+              <div class="menu-icon" data-model="emission" onclick="goTo('2')">
+                <div class="model-logo-text">排放模型</div>
+                <img
+                  src="./assets/images/bg/底座2.png"
+                  alt="排放模型"
+                  class="model-logo-image"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-items-box">
+            <div class="panel-items-box-left">
+              <div class="panel-item" data-model="chemical">
+                <!-- <div class="panel-item-title">化学传输模型</div> -->
+                <img
+                  src="./assets/images/echarts/化学模型new.png"
+                  alt="化学传输模型典型图"
+                  class="panel-item-image"
+                />
+              </div>
+            </div>
+            <div class="panel-items-box-right">
+              <div data-model="chemical" class="menu-icon" onclick="goTo('3')">
+                <div class="model-logo-text">化学传输模型</div>
+                <img
+                  src="./assets/images/bg/底座3.png"
+                  alt="化学传输模型"
+                  class="model-logo-image"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧面板 -->
+      <div class="right-panel">
+        <div class="panel-title">场景应用</div>
+        <div class="panel-items-container">
+          <div class="panel-items-box">
+            <div class="panel-items-box-right">
+              <div
+                data-model="meteorological"
+                class="menu-icon"
+                onclick="goTo('4')"
+              >
+                <div class="model-logo-text">预测预报</div>
+                <img
+                  src="./assets/images/bg/底座.png"
+                  alt="预测预报"
+                  class="model-logo-image"
+                />
+              </div>
+            </div>
+            <div class="panel-items-box-left">
+              <div class="panel-item" data-scenario="预测预报">
+                <!-- <div class="panel-item-title">预测预报</div> -->
+                <img
+                  src="./assets/images/echarts/预测预报new.png"
+                  alt="预测预报典型图"
+                  class="panel-item-image"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-items-box">
+            <div class="panel-items-box-right">
+              <div data-model="emission" class="menu-icon" onclick="goTo('5')">
+                <div class="model-logo-text">来源解析</div>
+                <img
+                  src="./assets/images/bg/底座2.png"
+                  alt="来源解析"
+                  class="model-logo-image"
+                />
+              </div>
+            </div>
+            <div class="panel-items-box-left">
+              <div class="panel-item" data-scenario="来源解析">
+                <!-- <div class="panel-item-title">来源解析</div> -->
+                <img
+                  src="./assets/images/echarts/来源解析new.png"
+                  alt="来源解析典型图"
+                  class="panel-item-image"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-items-box">
+            <div class="panel-items-box-right">
+              <div data-model="chemical" class="menu-icon" onclick="goTo('6')">
+                <div class="model-logo-text">规划调控</div>
+                <img
+                  src="./assets/images/bg/底座3.png"
+                  alt="规划调控"
+                  class="model-logo-image"
+                />
+              </div>
+            </div>
+            <div class="panel-items-box-left">
+              <div class="panel-item" data-scenario="规划调控">
+                <!-- <div class="panel-item-title">规划调控</div> -->
+                <img
+                  src="./assets/images/echarts/规划调控.png"
+                  alt="规划调控典型图"
+                  class="panel-item-image"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 系统头部 -->
+      <div class="system-header">
+        <!-- 菜单容器 -->
+        <div class="menu-container">
+          <!-- 左侧菜单 -->
+          <div class="left-menu">
+            <!--<div class="menu-item" data-text="数据总览"><span data-text="数据总览">数据总览</span></div>-->
+            <div class="menu-item" data-text="任务管理">
+              <span>任务管理</span>
+              <div class="submenu-container">
+                <a href="cmaq-setup-wizard.html" class="submenu-item"
+                  >创建任务</a
+                >
+                <a href="task-management.html" class="submenu-item">任务列表</a>
+              </div>
+            </div>
+            <div class="menu-item" data-text="集成模型">
+              <span>集成模型</span>
+              <div class="submenu-container">
+                <a href="#" class="submenu-item">气象模型</a>
+                <a href="#" class="submenu-item">排放模型</a>
+                <a href="cmaq-setup-wizard.html" class="submenu-item"
+                  >化学传输</a
+                >
+                <!-- <a href="suyuan-transfer-predict.html" class="submenu-item"
+                  >溯源模型</a
+                > -->
+                <!-- <a href="#" class="submenu-item">预报模型</a> -->
+                <!-- <a href="#" class="submenu-item">调控模型</a> -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧菜单 -->
+          <div class="right-menu">
+            <div class="menu-item" data-text="场景应用">
+              <span>场景应用</span>
+              <div class="submenu-container">
+                <a href="result-detail-real-time-data.html" class="submenu-item"
+                  >预测预报</a
+                >
+                <a href="suyuan-transfer-predict.html" class="submenu-item"
+                  >来源解析</a
+                >
+                <a href="long-term-planning-setup.html" class="submenu-item"
+                  >规划调控</a
+                >
+              </div>
+            </div>
+            <div class="menu-item" data-text="数据中心">
+              <span>数据中心</span>
+            </div>
+            <!--<div class="menu-item" data-text="系统管理" style="display:block"><span>系统管理</span></div>-->
+          </div>
+        </div>
+
+        <!-- 用户信息 -->
+        <div class="user-info">
+          <div class="user-avatar">用</div>
+          <span>当前用户</span>
+        </div>
+
+        <!-- 系统标题居中 -->
+        <div class="system-title-wrapper">
+          <h1 class="system-title">
+            京津冀新一代大气环境智能模型系统（NEXT+）
+          </h1>
+        </div>
+      </div>
+
+      <!-- 聚焦光圈 - 靠近头部 -->
+      <div class="focus-ring">
+        <img
+          src="./assets/images/bg/问题导向集成增效AI赋能.png"
+          alt="聚焦光圈"
+          class="focus-image"
+        />
+      </div>
+
+      <!-- 光圈区域 - 靠近头部 -->
+      <!-- <div class="ring-section">
+        <div class="ring-container">
+          <img
+            src="./assets/images/bg/圆圈.png"
+            alt="光圈"
+            class="ring-image"
+          />
+          <div class="ring-text">场景应用</div>
+          <div class="scenario-apps">
+            <div class="scenario-app">预测预报</div>
+            <div class="scenario-app">来源解析</div>
+            <div class="scenario-app">规划调控</div>
+          </div>
+        </div>
+      </div> -->
+
+      <!-- 球体区域 - 在中间 -->
+      <div class="sphere-section">
+        <div class="sphere-container">
+          <!-- 球体到场景应用的光线汇聚 -->
+          <!-- <div class="sphere-beams">
+                    <div class="sphere-beam"></div>
+                    <div class="sphere-beam"></div>
+                    <div class="sphere-beam"></div>
+                </div> -->
+          <div class="light-beam"></div>
+          <div class="light-beam"></div>
+          <div class="light-beam"></div>
+          <img
+            src="./assets/images/bg/球体.png"
+            alt="球体"
+            class="sphere-image"
+          />
+          <div class="sphere-text">大气环境<br />智能模型系统<br />NEXT+</div>
+        </div>
+      </div>
+
+      <!-- 底座区域 - 在底部 -->
+      <div class="base-section">
+        <div class="base-container">
+          <img
+            src="./assets/images/bg/大底座.png"
+            alt="大底座"
+            class="base-image"
+          />
+
+          <!-- 模型logo图片 -->
+          <!-- <div class="model-logos-images">
+            <div
+              class="model-logo-wrapper meteorological"
+              data-model="meteorological"
+            >
+              <div class="model-logo-text">气象模型</div>
+              <img
+                src="./assets/images/bg/底座.png"
+                alt="气象模型"
+                class="model-logo-image"
+              />
+            </div>
+            <div class="model-logo-wrapper emission" data-model="emission">
+              <div class="model-logo-text">排放模型</div>
+              <img
+                src="./assets/images/bg/底座2.png"
+                alt="排放模型"
+                class="model-logo-image"
+              />
+            </div>
+            <div class="model-logo-wrapper chemical" data-model="chemical">
+              <div class="model-logo-text">化学传输模型</div>
+              <img
+                src="./assets/images/bg/底座3.png"
+                alt="化学传输模型"
+                class="model-logo-image"
+              />
+            </div>
+          </div> -->
+
+          <!-- 箭头汇聚效果 -->
+          <!-- <div class="arrows-container">
+                    <img src="向上箭头.png" alt="气象模型箭头" class="arrow meteorological">
+                    <img src="向上箭头.png" alt="排放模型箭头" class="arrow emission">
+                    <img src="向上箭头.png" alt="化学传输模型箭头" class="arrow chemical">
+                </div> -->
+
+          <!-- 光线汇聚效果 -->
+          <div class="light-beams">
+            <div class="light-beam"></div>
+            <div class="light-beam"></div>
+            <div class="light-beam"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 跳转页面
+      function goTo(page) {
+        if (page === "1") {
+        } else if (page === "2") {
+          window.open(
+            "result-detail-emission-image.html",
+            "_blank",
+            "noopener,noreferrer"
+          );
+        } else if (page === "3") {
+          window.open(
+            "cmaq-setup-wizard.html",
+            "_blank",
+            "noopener,noreferrer"
+          );
+        } else if (page === "4") {
+          window.open(
+            "result-detail-real-time-data.html",
+            "_blank",
+            "noopener,noreferrer"
+          );
+        } else if (page === "5") {
+          window.open(
+            "suyuan-transfer-predict.html",
+            "_blank",
+            "noopener,noreferrer"
+          );
+        } else if (page === "6") {
+          window.open(
+            "long-term-planning.html",
+            "_blank",
+            "noopener,noreferrer"
+          );
+        }
+      }
+
+      // 页面加载完成后的初始化
+      document.addEventListener("DOMContentLoaded", function () {
+        // 添加页面加载动画
+        const container = document.querySelector(".dashboard-container");
+        container.style.opacity = "0";
+        container.style.transition = "opacity 2s ease-in-out";
+
+        setTimeout(() => {
+          container.style.opacity = "1";
+        }, 100);
+
+        // 动态调整光线聚焦效果
+        const lightBeams = document.querySelectorAll(".light-beam");
+        const modelLogos = document.querySelectorAll(".model-logo");
+
+        // 根据当前激活的模型logo调整光线强度
+        let currentLogo = 0;
+        setInterval(() => {
+          modelLogos.forEach((logo, index) => {
+            if (index === currentLogo) {
+              logo.style.boxShadow = "0 0 25px rgba(0, 212, 255, 0.8)";
+              logo.style.borderColor = "rgba(0, 212, 255, 0.8)";
+
+              // 激活对应的光线
+              lightBeams.forEach((beam, beamIndex) => {
+                if (beamIndex === currentLogo) {
+                  beam.style.opacity = "1";
+                  beam.style.height = "120px";
+                } else {
+                  beam.style.opacity = "0.3";
+                  beam.style.height = "100px";
+                }
+              });
+            } else {
+              logo.style.boxShadow = "0 0 15px rgba(0, 212, 255, 0.3)";
+              logo.style.borderColor = "rgba(0, 212, 255, 0.3)";
+            }
+          });
+
+          currentLogo = (currentLogo + 1) % 3;
+        }, 3333);
+
+        // 添加鼠标悬停效果
+        const interactiveElements = document.querySelectorAll(
+          ".model-logo, .scenario-app"
+        );
+        interactiveElements.forEach((element) => {
+          element.addEventListener("mouseenter", function () {
+            this.style.transform = "scale(1.1)";
+            this.style.transition = "transform 0.3s ease";
+          });
+
+          element.addEventListener("mouseleave", function () {
+            this.style.transform = "scale(1)";
+          });
+        });
+
+        // 键盘控制
+        let animationSpeed = 1;
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "+" || e.key === "=") {
+            animationSpeed = Math.min(animationSpeed + 0.2, 3);
+            updateAnimationSpeed();
+          } else if (e.key === "-" || e.key === "_") {
+            animationSpeed = Math.max(animationSpeed - 0.2, 0.2);
+            updateAnimationSpeed();
+          }
+        });
+
+        function updateAnimationSpeed() {
+          const animatedElements = document.querySelectorAll(
+            ".model-logo, .sphere-image, .ring-image, .scenario-app, .focus-image"
+          );
+          animatedElements.forEach((element) => {
+            element.style.animationDuration = `${
+              parseFloat(getComputedStyle(element).animationDuration) /
+              animationSpeed
+            }s`;
+          });
+        }
+
+        // 控制台信息
+        console.log("京津冀新一代大气环境智能模型系统（NEXT+）已启动");
+        console.log("快捷键：+ 加速动画，- 减速动画");
+        console.log("当前动画速度：", animationSpeed);
+
+        // AI悬浮按钮功能
+        // const aiButton = document.getElementById("aiButton");
+        // const aiChatWindow = document.getElementById("aiChatWindow");
+        // const closeAiChat = document.getElementById("closeAiChat");
+        // const aiInput = document.getElementById("aiInput");
+        // const sendButton = document.getElementById("sendButton");
+        // const aiChatContent = document.querySelector(".ai-chat-content");
+
+        // aiButton.addEventListener("click", function () {
+        //   aiChatWindow.style.display = "flex";
+        //   aiInput.focus();
+        // });
+
+        // closeAiChat.addEventListener("click", function () {
+        //   aiChatWindow.style.display = "none";
+        // });
+
+        // function sendMessage() {
+        //   const message = aiInput.value.trim();
+        //   if (message) {
+        //     // 添加用户消息
+        //     const userMessage = document.createElement("div");
+        //     userMessage.className = "ai-message";
+        //     userMessage.innerHTML = `<strong>您：</strong>${message}`;
+        //     aiChatContent.appendChild(userMessage);
+
+        //     // 清空输入框
+        //     aiInput.value = "";
+
+        //     // 模拟AI回复
+        //     setTimeout(() => {
+        //       const aiResponse = document.createElement("div");
+        //       aiResponse.className = "ai-message";
+        //       const responses = [
+        //         "我正在分析您的问题，请稍候...",
+        //         "基于大气环境模型数据，我建议您关注最新的气象变化趋势。",
+        //         "根据排放模型分析，近期污染物扩散条件较为有利。",
+        //         "智能模型正在处理您的请求，预计30秒内完成。",
+        //         "需要我为您展示相关的预测预报图表吗？",
+        //       ];
+        //       const randomResponse =
+        //         responses[Math.floor(Math.random() * responses.length)];
+        //       aiResponse.innerHTML = `<strong>AI助手：</strong>${randomResponse}`;
+        //       aiChatContent.appendChild(aiResponse);
+        //       aiChatContent.scrollTop = aiChatContent.scrollHeight;
+        //     }, 1000);
+
+        //     aiChatContent.scrollTop = aiChatContent.scrollHeight;
+        //   }
+        // }
+
+        // sendButton.addEventListener("click", sendMessage);
+
+        // aiInput.addEventListener("keypress", function (e) {
+        //   if (e.key === "Enter") {
+        //     sendMessage();
+        //   }
+        // });
+
+        // 点击外部关闭聊天窗口
+        // document.addEventListener("click", function (e) {
+        //   if (
+        //     !aiButton.contains(e.target) &&
+        //     !aiChatWindow.contains(e.target)
+        //   ) {
+        //     aiChatWindow.style.display = "none";
+        //   }
+        // });
+
+        // AI按钮提示信息
+        // aiButton.title = "AI智能助手";
+
+        // 底座模型logo轮番高亮效果和联动左侧面板
+        const modelLogoWrappers = document.querySelectorAll(
+          ".model-logo-wrapper"
+        );
+        const panelItems = document.querySelectorAll(".left-panel .panel-item");
+        let currentModelIndex = 0;
+        const modelTypes = ["meteorological", "emission", "chemical"];
+
+        // 高亮指定模型
+        function highlightModel(modelType) {
+          // 移除所有高亮
+          modelLogoWrappers.forEach((wrapper) =>
+            wrapper.classList.remove("active")
+          );
+          panelItems.forEach((item) => item.classList.remove("active"));
+
+          // 添加当前高亮
+          const currentWrapper = document.querySelector(
+            `.model-logo-wrapper[data-model="${modelType}"]`
+          );
+          const currentPanel = document.querySelector(
+            `.left-panel .panel-item[data-model="${modelType}"]`
+          );
+
+          if (currentWrapper) {
+            currentWrapper.classList.add("active");
+          }
+          if (currentPanel) {
+            currentPanel.classList.add("active");
+          }
+        }
+
+        // 轮番高亮逻辑
+        function rotateModelHighlight() {
+          highlightModel(modelTypes[currentModelIndex]);
+          currentModelIndex = (currentModelIndex + 1) % modelTypes.length;
+        }
+
+        // 初始高亮第一个模型
+        highlightModel("meteorological");
+
+        // 每3秒轮番高亮
+        setInterval(rotateModelHighlight, 3000);
+
+        // 为模型logo添加点击事件
+        modelLogoWrappers.forEach((wrapper) => {
+          wrapper.addEventListener("click", function () {
+            const modelType = this.getAttribute("data-model");
+            highlightModel(modelType);
+            currentModelIndex = modelTypes.indexOf(modelType);
+          });
+        });
+
+        // 为面板项目添加点击事件
+        panelItems.forEach((item) => {
+          item.addEventListener("click", function () {
+            const modelType = this.getAttribute("data-model");
+            highlightModel(modelType);
+            currentModelIndex = modelTypes.indexOf(modelType);
+          });
+        });
+
+        // 场景应用轮播同步高亮右侧面板
+        const scenarioApps = document.querySelectorAll(".scenario-app");
+        const rightPanelItems = document.querySelectorAll(
+          ".right-panel .panel-item"
+        );
+        const scenarios = ["预测预报", "来源解析", "规划调控"];
+        let currentScenarioIndex = 0;
+
+        // 高亮指定场景的右侧面板项
+        function highlightScenarioPanel(scenarioName) {
+          // 移除所有右侧面板项的高亮
+          rightPanelItems.forEach((item) => {
+            item.classList.remove("active");
+            // 移除自定义高亮样式
+            item.style.background = "rgba(0, 212, 255, 0.1)";
+            item.style.borderColor = "rgba(0, 212, 255, 0.3)";
+            item.style.boxShadow = "none";
+            item.style.transform = "scale(1)";
+          });
+
+          // 添加当前高亮
+          const currentPanelItem = document.querySelector(
+            `.right-panel .panel-item[data-scenario="${scenarioName}"]`
+          );
+          if (currentPanelItem) {
+            currentPanelItem.classList.add("active");
+            // 应用自定义高亮样式，模拟悬停效果
+            currentPanelItem.style.background = "rgba(0, 212, 255, 0.2)";
+            currentPanelItem.style.borderColor = "rgba(0, 212, 255, 0.8)";
+            currentPanelItem.style.boxShadow =
+              "0 0 25px rgba(0, 212, 255, 0.7)";
+            currentPanelItem.style.transform = "scale(1.05)";
+          }
+        }
+
+        // 获取当前活跃的场景索引（基于CSS动画状态）
+        function getCurrentActiveScenario() {
+          const now = Date.now();
+          // 计算动画开始后的时间点（考虑初始延迟）
+          const elapsed = (now - animationStartTime) % 8000; // 8秒循环
+
+          // 根据经过的时间确定当前活跃场景
+          if (elapsed < 2667) {
+            // 0-2.67秒，第一个场景活跃
+            return 0;
+          } else if (elapsed < 5333) {
+            // 2.67-5.33秒，第二个场景活跃
+            return 1;
+          } else {
+            // 5.33-8秒，第三个场景活跃
+            return 2;
+          }
+        }
+
+        // 场景轮播同步高亮逻辑 - 基于实际CSS动画状态
+        function rotateScenarioHighlight() {
+          const activeIndex = getCurrentActiveScenario();
+          currentScenarioIndex = activeIndex;
+          highlightScenarioPanel(scenarios[activeIndex]);
+        }
+
+        // 记录动画开始时间，用于精确同步计算
+        const animationStartTime = Date.now();
+
+        // 初始高亮第一个场景对应的右侧面板
+        highlightScenarioPanel("预测预报");
+
+        // 与场景应用动画精确同步，每2.67秒更新一次高亮状态
+        setInterval(rotateScenarioHighlight, 2670);
+
+        // 为场景应用添加点击事件，同步高亮右侧面板
+        scenarioApps.forEach((app, index) => {
+          app.addEventListener("click", function () {
+            highlightScenarioPanel(scenarios[index]);
+            currentScenarioIndex = index;
+          });
+        });
+
+        // 为右侧面板项添加点击事件，同步高亮对应场景
+        rightPanelItems.forEach((item, index) => {
+          item.addEventListener("click", function () {
+            highlightScenarioPanel(scenarios[index]);
+            currentScenarioIndex = index;
+          });
+        });
+
+        // 为子菜单项添加点击事件
+        const submenuItems = document.querySelectorAll(".submenu-item");
+        submenuItems.forEach((item) => {
+          item.addEventListener("click", function (e) {
+            // e.preventDefault(); // 阻止默认的链接跳转行为
+            const menuText = this.textContent.trim();
+
+            // 可以在这里添加相应的功能逻辑
+            console.log(`点击了子菜单项：${menuText}`);
+
+            // 显示提示信息（可以根据需求替换为其他操作）
+            const notification = document.createElement("div");
+            notification.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: linear-gradient(45deg, #00d4ff, #00ff88);
+                        color: #000000;
+                        padding: 15px 25px;
+                        border-radius: 10px;
+                        font-weight: bold;
+                        z-index: 1002;
+                        box-shadow: 0 4px 20px rgba(0, 212, 255, 0.5);
+                        animation: slideIn 0.3s ease-out;
+                    `;
+            notification.textContent = `已选择：${menuText}`;
+
+            // 添加滑入动画
+            const style = document.createElement("style");
+            style.textContent = `
+                        @keyframes slideIn {
+                            from {
+                                transform: translateX(100%);
+                                opacity: 0;
+                            }
+                            to {
+                                transform: translateX(0);
+                                opacity: 1;
+                            }
+                        }
+                        @keyframes slideOut {
+                            from {
+                                transform: translateX(0);
+                                opacity: 1;
+                            }
+                            to {
+                                transform: translateX(100%);
+                                opacity: 0;
+                            }
+                        }
+                    `;
+            document.head.appendChild(style);
+
+            document.body.appendChild(notification);
+
+            // 3秒后自动移除提示
+            setTimeout(() => {
+              notification.style.animation = "slideOut 0.3s ease-in";
+              setTimeout(() => {
+                if (notification.parentNode) {
+                  notification.parentNode.removeChild(notification);
+                }
+              }, 300);
+            }, 3000);
+          });
+        });
+      });
+    </script>
+
+    <script>
+      window.difyChatbotConfig = {
+        token: "uvMWHzgRIphCORdG",
+        // baseUrl: "https://rsmchat.hycx-gd.cn",
+        baseUrl: "http://10.100.30.5:880/",
+        inputs: {},
+        systemVariables: {},
+        userVariables: {},
+      };
+    </script>
+    <script
+      src="http://10.100.30.5:880/embed.min.js"
+      id="uvMWHzgRIphCORdG"
+      defer
+    ></script>
+
+    <style>
+      #dify-chatbot-bubble-button {
+        background-color: #1c64f2 !important;
+      }
+
+      #dify-chatbot-bubble-window {
+        width: 80vw !important;
+        height: 80vh !important;
+        min-width: 80vw !important;
+        min-height: 80vh !important;
+        --dify-chatbot-bubble-button-bottom: 6.5rem !important;
+        --dify-chatbot-bubble-button-right: 2.5rem !important;
+      }
+    </style>
+  </body>
+</html>
