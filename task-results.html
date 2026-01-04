@@ -1200,7 +1200,7 @@
               let result = await getWgs84BoundsFromIOAPI(ctx, global_attributes);
               ctx.mapBounds.value = result;
 
-              let imgUrl = `${window.origin}/public/ctm_demo_resutl/ctm/1_layer_data_cn03_model_to_one_png/cn03_${ctx.queryParams.value.pollutant}_2024102800.png`;
+              let imgUrl = `${window.origin}/ctm_demo_resutl/ctm/1_layer_data_cn03_model_to_one_png/cn03_${ctx.queryParams.value.pollutant}_2024102800.png`;
               let _imgUrl = await convertSingleImageToBlobUrl(imgUrl);
               ctx.imgUrlData.value = [_imgUrl];
             } catch (error) {

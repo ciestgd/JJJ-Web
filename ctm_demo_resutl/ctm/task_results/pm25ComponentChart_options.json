@@ -1,0 +1,42 @@
+[
+    {
+        "key": "PM25_CL",
+        "name": "氯离子",
+        "value": 0.08
+    },
+    {
+        "key": "PM25_EC",
+        "name": "元素碳",
+        "value": 0.79
+    },
+    {
+        "key": "PM25_NH4",
+        "name": "铵盐",
+        "value": 1.89
+    },
+    {
+        "key": "PM25_NO3",
+        "name": "硝酸盐",
+        "value": 5.7
+    },
+    {
+        "key": "PM25_POM",
+        "name": "一次有机物",
+        "value": 2.12
+    },
+    {
+        "key": "PM25_SO4",
+        "name": "硫酸盐",
+        "value": 1.9
+    },
+    {
+        "key": "PM25_SOM",
+        "name": "二次有机物",
+        "value": 2.63
+    },
+    {
+        "key": "OTHER",
+        "name": "其他",
+        "value": 3.89
+    }
+]
