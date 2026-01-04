@@ -1,0 +1,43 @@
+/* 图例基础样式 */
+.custom-legend {
+  background: transparent;
+  padding: 10px 15px;
+  border-radius: 5px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  color: white;
+}
+
+.map-legend-title {
+  margin: 0 0 10px 0;
+  font-weight: bold;
+  font-size: 16px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-size: 14px;
+}
+
+.legend-symbol {
+  margin-right: 8px;
+}
+
+/* 图例符号样式 */
+.symbol-circle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.symbol-square {
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border: 1px solid #000;
+}

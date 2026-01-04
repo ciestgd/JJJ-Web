@@ -1,0 +1,175 @@
+:root {
+  /* 定义CSS变量，统一主题样式 */
+  --primary-color: #00eeff;
+  --primary-glow: 0 0 10px rgba(0, 238, 255, 0.5);
+  --bg-primary: #0a0a2a;
+  --bg-secondary: rgba(25, 35, 70, 0.3);
+  --bg-tertiary: rgba(10, 20, 50, 0.3);
+  --border-color: rgba(0, 238, 255, 0.3);
+  --text-primary: #fff;
+  --text-secondary: rgba(255, 255, 255, 0.8);
+  --text-tertiary: rgba(255, 255, 255, 0.5);
+  --shadow: 0 5px 20px rgba(0, 238, 255, 0.2);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html,
+body {
+  font-family: "Microsoft YaHei", Arial, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.container {
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  padding: 5px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.container-main {
+  width: 100%;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding-top: 5px;
+}
+
+/* 头部导航区域 */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+  background: rgba(25, 35, 70, 0.9);
+  border-radius: 10px;
+  margin-bottom: 15px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.platform-name {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  text-shadow: var(--primary-glow);
+}
+
+.nav-menu {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+
+.nav-item {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  padding: 8px 15px;
+  border-radius: 20px;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  color: var(--primary-color);
+  background: rgba(0, 238, 255, 0.2);
+}
+
+/* 下拉菜单样式 */
+.nav-dropdown {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: rgba(25, 35, 70, 0.95);
+  border-radius: 10px;
+  padding: 10px 0;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(5px);
+  min-width: 150px;
+  z-index: 1000;
+}
+
+.nav-dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+.dropdown-item {
+  display: block;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 8px 20px;
+  transition: all 0.3s ease;
+}
+
+.dropdown-item:hover {
+  color: var(--primary-color);
+  background: rgba(0, 238, 255, 0.1);
+}
+
+.dropdown-toggle::after {
+  content: " ▼";
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, var(--primary-color), #0099cc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* 页脚 */
+footer {
+  text-align: center;
+  padding: 10px;
+  box-sizing: border-box;
+  color: var(--text-tertiary);
+  border-top: 1px solid rgba(0, 238, 255, 0.2);
+  margin-top: 10px;
+}
