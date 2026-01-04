@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="./utils/vue.global.js"></script>
+    <link rel="stylesheet" href="./assets/styles/common.css" />
+    <link rel="stylesheet" href="./utils/element-plus/index.css" />
+    <link
+      rel="stylesheet"
+      href="./utils/leaflet-velocity/leaflet-velocity.css"
+    />
+    <link rel="stylesheet" href="./utils/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="./MapData/map.css" />
+
+    <script src="./utils/element-plus/index.js"></script>
+    <script src="./utils/leaflet/leaflet.js"></script>
+    <!-- <script src="./utils/turf.min.js"></script> -->
+
+    <script src="./utils/leaflet-velocity/leaflet-velocity.js"></script>
+    <!-- 引入proj4依赖 -->
+    <script src="./utils/proj4.js"></script>
+    <script src="./utils/proj4leaflet.js"></script>
+    <script src="./utils/qs.js"></script>
+    <script src="./utils/axios.min.js"></script>
+    <script src="./libs/request_ue4.js"></script>
+    <script src="./libs/request-cmaq.js"></script>
+    <title>
+      污染物空间分布及时空演化 - 京津冀新一代大气环境智能模型系统（NEXT+）
+    </title>
+    <style>
+      /* 页面标题 */
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .page-title-section {
+        flex: 1;
+      }
+
+      .page-title {
+        font-size: 2.2rem;
+        color: var(--primary-color);
+        text-shadow: var(--primary-glow);
+        margin-bottom: 5px;
+      }
+
+      .page-subtitle {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+      }
+
+      .back-btn {
+        background: linear-gradient(45deg, #0066cc, var(--primary-color));
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+      }
+
+      .back-btn:hover {
+        background: linear-gradient(45deg, var(--primary-color), #0066cc);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 238, 255, 0.3);
+      }
+
+      /* 条件筛选区域 */
+      .filter-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+      }
+
+      .filter-title {
+        font-size: 1.3rem;
+        color: var(--primary-color);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        align-items: end;
+      }
+
+      .filter-item {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .filter-label {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+      }
+
+      .filter-select,
+      .filter-input {
+        padding: 10px;
+        background: rgba(10, 20, 50, 0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+      }
+
+      .filter-select:focus,
+      .filter-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 10px rgba(0, 238, 255, 0.3);
+      }
+
+      .apply-filter-btn {
+        background: linear-gradient(45deg, var(--primary-color), #0099cc);
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        align-self: end;
+      }
+
+      .apply-filter-btn:hover {
+        background: linear-gradient(45deg, #0099cc, var(--primary-color));
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 238, 255, 0.3);
+      }
+
+      /* 播放控制区域 */
+      .playback-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin: 15px 0;
+        padding: 15px;
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        width: 50%;
+      }
+
+      .play-btn {
+        background: linear-gradient(45deg, var(--primary-color), #0099cc);
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+
+      .play-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(0, 238, 255, 0.5);
+      }
+
+      .progress-container {
+        flex: 1;
+      }
+
+      .progress-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color), #0099cc);
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      .speed-control {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-secondary);
+      }
+
+      .speed-select {
+        padding: 5px 10px;
+        background: rgba(10, 20, 50, 0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+      }
+
+      /* 内容展示区域 */
+      .content-area {
+        /* display: grid; */
+        /* flex: 1; */
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+
+      /* 主要图表区域 */
+      .main-chart-area {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 15px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+
+      .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 238, 255, 0.2);
+        box-sizing: border-box;
+        width: 100%;
+      }
+
+      .chart-title {
+        font-size: 1.4rem;
+        color: var(--primary-color);
+        font-weight: bold;
+      }
+      .chart-title-block {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .chart-subinfo {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        margin-top: 6px;
+      }
+
+      .chart-tabs {
+        display: flex;
+        gap: 10px;
+      }
+
+      .chart-tab {
+        padding: 8px 15px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 18px;
+      }
+
+      .chart-tab.active,
+      .chart-tab:hover {
+        background: rgba(0, 238, 255, 0.2);
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .chart-container {
+        width: 100%;
+        flex: 1;
+        box-sizing: border-box;
+        background: var(--bg-tertiary);
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(0, 238, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+
+      .check-content {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+      }
+
+      .chart-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+
+      .chart-placeholder {
+        color: var(--text-tertiary);
+        text-align: center;
+        font-size: 1.1rem;
+      }
+
+      /* 侧边信息区域 */
+      .side-info {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .info-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 20px;
+      }
+
+      .info-title {
+        font-size: 1.2rem;
+        color: var(--primary-color);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .data-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(0, 238, 255, 0.1);
+      }
+
+      .stat-item:last-child {
+        border-bottom: none;
+      }
+
+      .stat-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      .stat-value {
+        color: var(--primary-color);
+        font-weight: bold;
+      }
+
+      .legend-panel {
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .legend-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 3px;
+      }
+
+      .legend-text {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+      }
+
+      #commonMapContent,
+      #threeDFrame {
+        width: 100%;
+        flex: 1;
+        background: var(--bg-primary);
+      }
+
+      #threeDFrame {
+        display: none;
+      }
+
+      .chart-tab {
+        margin-right: 8px;
+      }
+
+      .sidebar-header {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .sidebar-panel {
+        margin-bottom: 25px;
+      }
+
+      .el-drawer__body {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        box-sizing: border-box;
+        border-left: 1px solid var(--border-color);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container" id="app">
+      <!-- 头部导航 -->
+      <header>
+        <div class="logo-section">
+          <div class="platform-name">
+            京津冀新一代大气环境智能模型系统（NEXT+）
+          </div>
+        </div>
+
+        <nav class="nav-menu">
+          <a href="index.html" class="nav-item active">首页</a>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-item dropdown-toggle">应用场景</a>
+            <div class="dropdown-menu">
+              <a href="#" class="dropdown-item">空气质量预报</a>
+              <a href="#" class="dropdown-item">重污染应对</a>
+              <a href="long-term-planning-setup.html" class="dropdown-item"
+                >中长期规划</a
+              >
+            </div>
+          </div>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-item dropdown-toggle">模型集成</a>
+            <div class="dropdown-menu">
+              <a href="#" class="dropdown-item">气象模型</a>
+              <a href="#" class="dropdown-item">排放清单</a>
+              <a href="cmaq-setup-wizard.html" class="dropdown-item"
+                >化学传输</a
+              >
+              <a href="#" class="dropdown-item">溯源模型</a>
+              <a href="#" class="dropdown-item">预报模型</a>
+              <a href="#" class="dropdown-item">调控模型</a>
+            </div>
+          </div>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-item dropdown-toggle">任务调度</a>
+            <div class="dropdown-menu">
+              <a href="task-management.html" class="dropdown-item">任务管理</a>
+              <a href="#" class="dropdown-item">定时任务</a>
+              <a href="#" class="dropdown-item">实时调度</a>
+              <a href="#" class="dropdown-item">性能监控</a>
+            </div>
+          </div>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-item dropdown-toggle">数据分析</a>
+            <div class="dropdown-menu">
+              <a href="#" class="dropdown-item">数据可视化</a>
+              <a href="#" class="dropdown-item">统计分析</a>
+              <a href="#" class="dropdown-item">趋势预测</a>
+              <a href="#" class="dropdown-item">报告生成</a>
+            </div>
+          </div>
+        </nav>
+
+        <div class="user-section">
+          <div class="user-info">
+            <div class="user-avatar">U</div>
+            <div class="username">
+              用户: <span id="current-user">admin</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="container-main">
+        <!-- 主内容区域 -->
+        <div class="content-area">
+          <!-- 主要图表区域 -->
+          <div class="main-chart-area">
+            <div class="chart-header">
+              <div class="chart-title-block">
+                <h3 class="chart-title">污染物空间分布及时空演化</h3>
+                <div class="chart-subinfo">{{ displayPollutantLayer }}</div>
+              </div>
+              <div class="playback-controls">
+                <button class="play-btn" @click="togglePlayback">
+                  <span v-if="isPlaying">⏸</span>
+                  <span v-else>▶</span>
+                </button>
+                <div class="progress-container">
+                  <div class="progress-info">
+                    <div>
+                      <span>{{ currentDayLabel }}</span>
+                      <span style="margin-left: 20px"
+                        >{{ currentTimeLabel }}</span
+                      >
+                    </div>
+                    <span>{{ progressPercentage }}%</span>
+                  </div>
+                  <div class="progress-bar" @click="seekProgress">
+                    <div
+                      class="progress-fill"
+                      :style="{ width: progressPercentage + '%' }"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+              <div class="chart-tabs">
+                <div
+                  v-show="!threeDMapSelect"
+                  class="chart-tab"
+                  :class="{ active: stationSelect }"
+                  @click="addStationsLayer"
+                >
+                  叠加站点数据
+                </div>
+                <div
+                  v-show="!threeDMapSelect"
+                  class="chart-tab"
+                  :class="{ active: meteorologySelect }"
+                  @click="addMeteorologyLayer"
+                >
+                  叠加气象场
+                </div>
+                <select
+                  v-show="threeDMapSelect"
+                  class="filter-select"
+                  v-model="threeDMapLayerSelected"
+                  @change="threeDMapLayerChange"
+                >
+                  <option value="bar" selected>柱状图</option>
+                  <option value="heat">热力图</option>
+                  <option value="wind">风场图</option>
+                </select>
+                <div class="chart-tab" @click="toggleSidebar">设置</div>
+                <a href="task-results.html" class="back-btn">← 返回结果总览</a>
+              </div>
+            </div>
+            <div class="chart-container" id="main-chart">
+              <div
+                id="commonMapContent"
+                ref="commonMapContentRef"
+                v-show="!threeDFrameVisible"
+              ></div>
+              <iframe
+                id="threeDFrame"
+                ref="threeDFrameRef"
+                :style="{ display: threeDFrameVisible ? 'block' : 'none' }"
+                v-show="threeDFrameVisible"
+                src="/ueWeb/#/index"
+                frameborder="0"
+              ></iframe>
+              <div class="check-content">
+                <div
+                  class="chart-tab"
+                  :class="{ active: threeDMapSelect }"
+                  @click="handleThreeDMap"
+                >
+                  3D地图
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <el-drawer
+          title="筛选与播放控制"
+          v-model="sidebarVisible"
+          :style="{display: !sidebarVisible ? 'none' : 'flex'}"
+          direction="rtl"
+          size="380px"
+          :with-header="false"
+        >
+          <div class="sidebar-content">
+            <div class="filter-panel">
+              <h3 class="filter-title">
+                <span>🔍</span>
+                条件筛选设置
+              </h3>
+              <div class="filter-grid">
+                <!-- <div class="filter-item">
+                  <label class="filter-label">模拟输出数据</label>
+                  <input
+                    type="text"
+                    class="filter-input"
+                    :value="queryParams.defaultData"
+                    readonly
+                  />
+                </div> -->
+                <div class="filter-item">
+                  <label class="filter-label">污染物</label>
+                  <select class="filter-select" v-model="queryParams.pollutant">
+                    <option
+                      v-for="pollutant in pollutantOptions"
+                      :key="pollutant.value"
+                      :value="pollutant.value"
+                    >
+                      {{ pollutant.label }}
+                    </option>
+                  </select>
+                </div>
+                <div class="filter-item">
+                  <label class="filter-label">日期范围</label>
+                  <select class="filter-select" v-model="queryParams.timeDay">
+                    <option
+                      v-for="range in dateDayOptions"
+                      :key="range.value"
+                      :value="range.value"
+                      @change="handleDayChange"
+                    >
+                      {{ range.label }}
+                    </option>
+                  </select>
+                  <select class="filter-select" v-model="queryParams.time">
+                    <option
+                      v-for="range in dateOptions"
+                      :key="range.value"
+                      :value="range.value"
+                    >
+                      {{ range.label }}
+                    </option>
+                  </select>
+                </div>
+                <div class="filter-item">
+                  <label class="filter-label">模拟层数</label>
+                  <!-- <input type="text" class="filter-input" v-model="queryParams.layer" /> -->
+                  <select class="filter-select" v-model="queryParams.layer">
+                    <option
+                      v-for="range in layerOptions"
+                      :key="range.value"
+                      :value="range.value"
+                    >
+                      {{ range.label }}
+                    </option>
+                  </select>
+                </div>
+                <div class="filter-item">
+                  <button class="apply-filter-btn" @click="applyFilters">
+                    应用筛选
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-drawer>
+      </div>
+
+      <footer>
+        <p>&copy; 2024 京津冀新一代大气环境智能模型系统（NEXT+）. 版权所有</p>
+      </footer>
+    </div>
+
+    <script type="module">
+      import chinaGeoJson from "./MapData/china.js";
+      import { MapComponent } from "./MapData/map-component.js";
+      const { createApp, ref, onMounted, onUnmounted, watch, nextTick, computed } = Vue;
+      const {
+        ElDrawer,
+        ElButton,
+        ElInput,
+        ElSelect,
+        ElOption,
+        ElRow,
+        ElCol,
+        ElFormItem,
+        ElSlider,
+        ElIcon,
+        Setting,
+        ElMessage,
+        ElLoading,
+      } = ElementPlus;
+
+      createApp({
+        components: {
+          ElDrawer,
+          ElButton,
+          ElInput,
+          ElSelect,
+          ElOption,
+          ElRow,
+          ElCol,
+          ElFormItem,
+          ElSlider,
+          ElIcon,
+          ElMessage,
+          ElLoading,
+        },
+        setup() {
+          const threeDFrameRef = ref(null);
+          const threeDFrameVisible = ref(false);
+          const sidebarVisible = ref(false);
+          const baseColorData = ref([]);
+          // 响应式状态管理
+          const commonMapContentRef = ref(null);
+          const myMap = ref(null);
+          const isLambert = ref(true); // 是否为兰伯特投影
+          const lambertProjDef = ref(
+            "+proj=lcc +lat_1=25 +lat_2=45 +lon_0=105 +lat_0=35 +x_0=0 +y_0=0 +datum=WGS84  +units=m +no_defs"
+          );
+          const dateTimeAllData = ref([]);
+          const ncAttributeData = ref(null);
+          const layerOptions = ref([]);
+          const windImageLayer = ref(null);
+          const stationData = ref([]); // 站点数据
+          const meteorologyData = ref([]); // 气象场数据
+          const stationGroupLayer = ref(null);
+          const meteorologyGroupLayer = ref(null);
+          const mapMarkersLayer = ref(null);
+          const baseModelFileData = ref({});
+          const baseMapCorners = ref([]);
+          // 颜色配置
+          const colorList = ref([
+            // { min: -5, max: 0, color: "#FEFEFE" },
+            { min: 0, max: 5, color: "#DEF1FA" },
+            { min: 5, max: 10, color: "#BEE6F9" },
+            { min: 10, max: 15, color: "#9CD9F6" },
+            { min: 15, max: 20, color: "#80C0E6" },
+            { min: 20, max: 25, color: "#65A8D9" },
+            { min: 25, max: 30, color: "#478DC8" },
+            { min: 30, max: 35, color: "#479A9D" },
+            { min: 35, max: 40, color: "#48A673" },
+            { min: 40, max: 45, color: "#47B345" },
+            { min: 45, max: 50, color: "#83C54C" },
+            { min: 50, max: 55, color: "#C0D553" },
+            { min: 55, max: 60, color: "#F8E75B" },
+            { min: 60, max: 65, color: "#F6BE4A" },
+            { min: 65, max: 70, color: "#F5953A" },
+            { min: 70, max: 75, color: "#F36A29" },
+            { min: 75, max: 80, color: "#E95228" },
+            { min: 80, max: 85, color: "#DC3626" },
+            { min: 85, max: 90, color: "#D11E26" },
+            { min: 90, max: 95, color: "#BD1C21" },
+            { min: 95, max: 100, color: "#A6181D" },
+            { min: 100, max: 105, color: "#91161A" },
+          ]);
+          const resetQueryParams = () => {
+            return {
+              fileName: "",
+              pollutant: "PM25_TOT",
+              timeDay: "2025-11-17",
+              time: "0",
+              layer: "0",
+            };
+          };
+          // 查询参数
+          const queryParams = ref(resetQueryParams());
+
+          // 日期选项
+          const dateOptions = ref([]);
+          const dateDayOptions = ref([]);
+
+          // 污染物选项
+          const pollutantOptions = ref([]);
+
+          // 图层开关
+          const stationSelect = ref(false);
+          const meteorologySelect = ref(false);
+          const threeDMapSelect = ref(false);
+          const threeDMapLayerSelected = ref("bar");
+
+          // 播放控制相关变量
+          const isPlaying = ref(false);
+          const playbackInterval = ref(null);
+          const playbackSpeed = ref(1); // 播放速度倍数
+          const progressPercentage = ref(0);
+          const currentDayLabel = ref("2024-10-28");
+          const currentTimeLabel = ref("00:00 - 01:00");
+
+          // 基础数据
+          const baseData = ref({});
+          const mapBounds = ref(null);
+          let mapComponentDom;
+          const imgUrlData = ref([]);
+
+          // 方法
+          const toggleSidebar = () => {
+            sidebarVisible.value = !sidebarVisible.value;
+          };
+
+          // 初始化日期范围选项
+          const initDateRanges = () => {
+            let data = [];
+            for (let i = 0; i < 24; i++) {
+              const startHour = i.toString().padStart(2, "0");
+              const endHour = ((i + 1) % 24).toString().padStart(2, "0");
+              data.push({
+                label: `${startHour}:00 - ${endHour}:00`,
+                value: i,
+              });
+            }
+            queryParams.value.time = data[0].value;
+            dateOptions.value = data;
+            dateDayOptions.value = [
+              {
+                label: "2024-10-25",
+                value: "20241025",
+              },
+              {
+                label: "2024-10-26",
+                value: "20241026",
+              },
+              {
+                label: "2024-10-27",
+                value: "20241027",
+              },
+              {
+                label: "2024-10-28",
+                value: "20241028",
+              },
+            ];
+            // queryParams.value.timeDay = dateDayOptions.value[dateDayOptions.value.length - 1].value;
+            queryParams.value.timeDay = dateDayOptions.value[0].value;
+            updateProgress();
+          };
+
+          const getColor = (value) => {
+            if (value === null || value === undefined || isNaN(value)) {
+              return "#000"; // 缺失值颜色
+            }
+            for (let i = 0; i < colorList.value.length; i++) {
+              const range = colorList.value[i];
+              if (value >= range.min && value <= range.max) {
+                return range.color;
+              }
+            }
+            // 检查是否有是否超出范围的颜色定义
+            if (value > colorList.value[0].max) {
+              return colorList.value[0].color;
+            } else if (
+              value < colorList.value[colorList.value.length - 1].min
+            ) {
+              return colorList.value[colorList.value.length - 1].color;
+            }
+            return "#fff"; // 超出范围颜色
+          };
+          const getStationData = async () => {
+            let url =
+              "./selected_station_data/station-data_extracted_20241025_to_20241027.json";
+            let res = await fetch(url).then((response) => response.json());
+
+            stationData.value = res || [];
+          };
+          const drawStationGroupLayer = async () => {
+            if (stationSelect.value) {
+              if (!stationData.value.length) {
+                await getStationData();
+              }
+              stationGroupLayer.value.clearLayers();
+              // 先根据时间过滤数据
+              let timePoint = `2024-10-25 ${queryParams.value.time
+                .toString()
+                .padStart(2, "0")}:00:00`;
+              let data = stationData.value.filter(
+                (item) => item.date === timePoint
+              );
+              let key =
+                queryParams.value.pollutant == "PM25_TOT"
+                  ? "PM2.5"
+                  : queryParams.value.pollutant;
+              data = data
+                .map((item) => {
+                  return {
+                    ...item,
+                    value: item[key],
+                  };
+                })
+                .filter(
+                  (item) =>
+                    item.lat &&
+                    item.lat != "-" &&
+                    item.lon &&
+                    item.lon != "-" &&
+                    item.value !== null &&
+                    item.value !== undefined
+                );
+              let markerList = [];
+              data.forEach((station) => {
+                const { lat, lon, stationName, value } = station;
+                const color = getColor(value);
+                const marker = L.circleMarker(new L.LatLng(lat, lon), {
+                  radius: 6,
+                  fillColor: color,
+                  color: "#000",
+                  weight: 1,
+                  opacity: 1,
+                  fillOpacity: 0.8,
+                });
+                markerList.push(marker);
+                stationGroupLayer.value.addLayer(marker);
+              });
+            } else {
+              stationGroupLayer.value.clearLayers();
+            }
+          };
+          // 添加站点数据图层
+          const addStationsLayer = () => {
+            stationSelect.value = !stationSelect.value;
+            // 站点数据图层实现
+            drawStationGroupLayer();
+          };
+          const getMeteorologyData = async () => {
+            // 命中缓存直接返回
+            if (meteorologyData.value.length) {
+              return meteorologyData.value;
+            }
+            let path =
+              "./assets/images/wind_image/METCRO2D_cn03_2024299/layer_0";
+
+            let promisArr = [];
+            let resultList;
+            const getImageBlob = async (path) => {
+              let res = await fetch(path);
+              const blob = await res.blob();
+              return URL.createObjectURL(blob);
+            };
+            for (let i = 0; i < 24; i++) {
+              let hourStr = i.toString().padStart(3, "0");
+              let imgPath = `${path}/wind_t${hourStr}.png`;
+              let imgRes = getImageBlob(imgPath);
+              promisArr.push({
+                time: i,
+                imageUrl: await imgRes,
+              });
+            }
+            let imageList = await Promise.all(promisArr);
+
+            meteorologyData.value = imageList;
+            return meteorologyData.value;
+          };
+
+          const drawCanvasGrid = async (imgData) => {
+            if (!imgData || !imgData.imageUrl || !mapBounds.value) {
+              return;
+            }
+
+            const imageUrl = imgData.imageUrl;
+            const layers = meteorologyGroupLayer.value.getLayers();
+
+            // 创建新图层
+            const newLayer = L.imageOverlay(imageUrl, mapBounds.value, {
+              opacity: 0,
+              attribution: "Wind Image Layer",
+              interactive: true,
+            });
+
+            // 把 URL 存到图层实例，后续回收用
+            newLayer._urlObject = imageUrl;
+
+            newLayer.once("load", () => {
+              // 新图层渐显
+              newLayer.setOpacity(0.8);
+
+              // 清理旧图层
+              layers.forEach((oldLayer) => {
+                meteorologyGroupLayer.value.removeLayer(oldLayer);
+
+                // 如果是我们自己创建的 ObjectURL，就释放
+                if (oldLayer._urlObject) {
+                  // URL.revokeObjectURL(oldLayer._urlObject);
+                  oldLayer._urlObject = null;
+                }
+
+                oldLayer.off();
+              });
+            });
+
+            // 更新当前引用
+            windImageLayer.value = newLayer;
+            newLayer.addTo(meteorologyGroupLayer.value);
+            newLayer.setZIndex(999);
+          };
+
+          // 添加气象场图层
+          const drawMeteorologyGroupLayer = async () => {
+            if (!meteorologySelect.value) {
+              // 移除气象场图层
+              meteorologyGroupLayer.value.clearLayers();
+              windImageLayer.value = null;
+              return;
+            }
+            let meteorologyBaseData = await getMeteorologyData();
+            let timeIndex = dateOptions.value.findIndex(
+              (item) => item.value == queryParams.value.time
+            );
+            let data = meteorologyBaseData.find(
+              (item) => item.time === timeIndex
+            );
+            if (!data) {
+              return;
+            }
+            drawCanvasGrid(data);
+          };
+          const addMeteorologyLayer = () => {
+            meteorologySelect.value = !meteorologySelect.value;
+            // 气象场图层实现
+            drawMeteorologyGroupLayer();
+          };
+          const handleMapDraw = async ({ isPlayback = false } = {}) => {
+            if (threeDMapSelect.value) {
+              // 3D 模式下，避免在连播时每帧都重新拉取和绘制重型 3D 图层
+              if (!isPlayback) {
+                await threeDMapLayerChange();
+              }
+            } else {
+              // 2D 地图：每帧都更新主底图
+              drawBaseMap();
+              drawMeteorologyGroupLayer();
+              // // 站点和气象场图层相对静态，播放时不必每一帧都重绘，减轻卡顿
+              // if (!isPlayback) {
+              //   drawStationGroupLayer();
+              // }
+              drawStationGroupLayer();
+            }
+          };
+          // 应用筛选条件
+          const applyFilters = async () => {
+            updateProgress();
+            await getData();
+            await handleMapDraw();
+
+            sidebarVisible.value = false;
+          };
+
+          // 当时间选择改变时更新进度
+          const onTimeChange = () => {
+            updateProgress();
+          };
+
+          // 更新进度条和时间标签
+          const updateProgress = () => {
+            const totalFrames = dateOptions.value.length - 1;
+            let timeIndex = dateOptions.value.findIndex(
+              (option) => option.value === queryParams.value.time
+            );
+            progressPercentage.value = Math.round(
+              (timeIndex / totalFrames) * 100
+            );
+
+            // 更新当前时间标签
+            const currentOption = dateOptions.value.find(
+              (option) => option.value === queryParams.value.time
+            );
+            if (currentOption) {
+              currentTimeLabel.value = currentOption.label;
+            }
+            var currentDay = dateDayOptions.value.find(
+              (option) => option.value === queryParams.value.timeDay
+            );
+            if (currentDay && currentOption) {
+              currentDayLabel.value = `${currentDay.label}`;
+            }
+          };
+
+          // 切换播放/暂停状态
+          const togglePlayback = () => {
+            if (isPlaying.value) {
+              pausePlayback();
+            } else {
+              startPlayback();
+            }
+          };
+
+          // 开始播放
+          // 开始播放
+          const startPlayback = async () => {
+            isPlaying.value = true;
+
+            // 清除任何现有定时器
+            if (playbackInterval.value) {
+              clearTimeout(playbackInterval.value);
+              playbackInterval.value = null;
+            }
+
+            // 定义递归播放函数
+            const playNextFrame = async () => {
+              // 如果已暂停则退出递归
+              if (!isPlaying.value) return;
+
+              try {
+                // 当前时间在本天时间数组中的下标
+                const currentIndex = dateOptions.value.findIndex(
+                  (item) => item.value === queryParams.value.time
+                );
+
+                // 如果找不到或者已经是最后一帧，则停止播放
+                if (
+                  currentIndex === -1 ||
+                  currentIndex >= dateOptions.value.length - 1
+                ) {
+                  nextTime = 0;
+                  queryParams.value.time = nextTime;
+                  pausePlayback();
+                  return;
+                }
+
+                // 下一个时间点
+                const nextIndex = currentIndex + 1;
+                queryParams.value.time = dateOptions.value[nextIndex].value;
+                updateProgress();
+                await handleMapDraw({ isPlayback: true });
+
+                // 根据播放速度计算下一次执行时间
+                const intervalTime = 1000 / playbackSpeed.value;
+
+                // 安排下一次播放
+                playbackInterval.value = setTimeout(
+                  playNextFrame,
+                  intervalTime
+                );
+              } catch (error) {
+                console.error("播放过程出错:", error);
+                pausePlayback();
+              }
+            };
+
+            // 开始播放第一帧
+            playNextFrame();
+          };
+          const pausePlayback = () => {
+            isPlaying.value = false;
+            if (playbackInterval.value) {
+              clearInterval(playbackInterval.value);
+              playbackInterval.value = null;
+            }
+          };
+
+          // 更新播放速度
+          const updatePlaybackSpeed = () => {
+            if (isPlaying.value) {
+              // 如果正在播放，重新启动以应用新速度
+              startPlayback();
+            }
+          };
+
+          // 进度条点击跳转
+          const seekProgress = async (e) => {
+            const progressBar = e.currentTarget;
+            const rect = progressBar.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            const totalFrames = dateOptions.value.length - 1;
+            const newTime = Math.round(pos * totalFrames);
+
+            queryParams.value.time = newTime;
+            updateProgress();
+            // drawBaseMap();
+            await handleMapDraw();
+          };
+
+          /**
+           * 根据 IOAPI 数据参数，计算 WGS84 坐标系的地理边界
+           */
+          function getWgs84BoundsFromIOAPI(ioapiData) {
+            try {
+              const {
+                NCOLS,
+                NROWS,
+                XORIG,
+                YORIG,
+                XCELL,
+                YCELL,
+                P_ALP,
+                P_BET,
+                P_GAM,
+                YCENT,
+              } = ioapiData;
+
+              // 校验必要参数
+              const requiredParams = [
+                NCOLS,
+                NROWS,
+                XORIG,
+                YORIG,
+                XCELL,
+                YCELL,
+                P_ALP,
+                P_BET,
+                P_GAM,
+                YCENT,
+              ];
+              if (
+                requiredParams.some(
+                  (param) => param === undefined || param === null
+                )
+              ) {
+                throw new Error("IOAPI 数据缺少必要的投影或范围参数");
+              }
+              if (NCOLS <= 0 || NROWS <= 0 || XCELL <= 0 || YCELL <= 0) {
+                throw new Error(
+                  "NCOLS/NROWS/XCELL/YCELL 必须为正数（网格大小无效）"
+                );
+              }
+
+              const xMin = Number(XORIG);
+              const xMax = Number(XORIG) + Number(NCOLS) * Number(XCELL);
+              const yMax = Number(YORIG) + Number(NROWS) * Number(YCELL);
+              const yMin = Number(YORIG);
+
+              const lccProjDef = `+proj=lcc +lat_1=${P_ALP} +lat_2=${P_BET} +lon_0=${P_GAM} +lat_0=${YCENT} +x_0=0 +y_0=0 +datum=WGS84  +units=m +no_defs`;
+              lambertProjDef.value = lccProjDef;
+              const projectToWGS84 = proj4(lccProjDef, "EPSG:4326");
+
+              const corners = [
+                [xMin, yMax], // 左上角
+                [xMax, yMax], // 右上角
+                [xMin, yMin], // 左下角
+                [xMax, yMin], // 右下角
+              ].map((coord) => projectToWGS84.forward(coord));
+
+              // baseMapCorners.value = [
+              //   [corners[0][0], corners[0][1]],
+              //   [corners[1][0], corners[1][1]],
+              //   [corners[3][0], corners[3][1]],
+              //   [corners[2][0], corners[2][1]],
+              // ];
+              console.log("计算得到的地图边界坐标:", corners);
+              baseMapCorners.value = corners;
+              return L.latLngBounds([
+                [corners[0][1], corners[0][0]],
+                [corners[3][1], corners[3][0]],
+              ]);
+            } catch (error) {
+              return [];
+            }
+          }
+
+          const getModelFileData = async (
+            fileName,
+            layerIndex,
+            pollutant,
+            startTime,
+            endTime
+          ) => {
+            // 判断缓存文件是否存在
+            let fileKey = `${fileName}-${layerIndex}-${pollutant}-${startTime}-${endTime}`;
+            if (baseModelFileData.value[fileKey]) {
+              return baseModelFileData.value[fileKey];
+            }
+            let params = {
+              fileName: fileName,
+              layerIndex: layerIndex,
+              pollutant: pollutant,
+              start_time: startTime,
+              end_time: endTime,
+            };
+            console.log("请求参数:", params);
+            let res = await fetch_ctm_model_data(params);
+            baseModelFileData.value[fileKey] = res.data;
+            return res.data;
+          };
+          const getData = async () => {
+            let loading = ElLoading.service({
+              target: ".results-container",
+              text: "数据加载中...",
+              background: "rgba(0, 0, 0, 0.8)",
+            });
+
+            baseData.value = null;
+            try {
+              let data;
+              console.log("查询参数:", queryParams.value);
+              console.log(dateOptions.value);
+              let startTime = dateOptions.value[0].value;
+              let endTime =
+                dateOptions.value[dateOptions.value.length - 1].value;
+              // 浓度场和湿度场公用一份数据
+              data = await getModelFileData(
+                queryParams.value.fileName,
+                queryParams.value.layer,
+                queryParams.value.pollutant,
+                startTime,
+                endTime
+              );
+
+              let targetData = data[0];
+              if (targetData) {
+                // 根据层级过滤数据
+                let layers = targetData.layers || [];
+                let layerData = layers.find(
+                  (item) =>
+                    item.layer_index === parseInt(queryParams.value.layer)
+                );
+                if (layerData) {
+                  // 根据时间过滤数据
+                  baseData.value = layerData;
+                }
+              }
+              console.log("获取到的数据:", baseData.value);
+            } catch (error) {
+              console.error("获取数据失败:", error);
+              ElMessage.error("获取数据失败，请重试");
+            } finally {
+              loading.close();
+            }
+          };
+
+          const initMap = () => {
+            mapComponentDom = new MapComponent(commonMapContentRef.value, {
+              isLambert: isLambert.value,
+              lambertProjDef: lambertProjDef.value,
+            });
+            myMap.value = mapComponentDom.getMap();
+            // 站点图层
+            stationGroupLayer.value = L.featureGroup().addTo(myMap.value);
+            // 气象场图层
+            meteorologyGroupLayer.value = L.featureGroup().addTo(myMap.value);
+            mapMarkersLayer.value = L.featureGroup().addTo(myMap.value);
+          };
+          const formatData = (value, pollutant) => {
+            let translateFactor = 1;
+            let pollutantOption = pollutantOptions.value.find(
+              (item) => item.value === pollutant
+            );
+            if (pollutantOption) {
+              translateFactor = pollutantOption.translate;
+            }
+            if (value === null || value === undefined || isNaN(value)) {
+              return null; // 缺失值
+            }
+            let targetValue = value * translateFactor;
+            if (pollutant == "CO") {
+              targetValue = targetValue / 1000; // CO单位转换为 mg/m3
+            }
+            return targetValue;
+          };
+          const handleValueFormat = (value) => {
+            // 这些污染物默认取两位小数
+            let pollutantList = [
+              "PM25_CL",
+              "PM25_NA",
+              "PM25_K",
+              "PM25_CA",
+              "PM25_MG",
+              "PM25_EC",
+              "PM25_NH4",
+              "PM25_NO3",
+              "PM25_OC",
+              "PM25_SO4",
+            ];
+            if (pollutantList.includes(queryParams.value.pollutant)) {
+              return Math.round(value * 100) / 100;
+            }
+            // 如果污染物是CO，取一位小数
+            if (queryParams.value.pollutant === "CO_UGM3") {
+              return Math.round(value * 10) / 10;
+            }
+            // 默认取整
+            return Math.ceil(value);
+          };
+          const resetColorOption = ({ maxValue, minValue }) => {
+            let colorData = [].concat(colorList.value);
+            let len = colorData.length;
+            let step = (maxValue - minValue) / len;
+            let colors = [];
+            for (let i = 0; i < len; i++) {
+              let min = minValue + step * i;
+              let max = minValue + step * (i + 1);
+              min = handleValueFormat(min);
+              max = handleValueFormat(max);
+              colors.push({
+                min: min,
+                max: max,
+                color: colorData[i]?.color || "rgb(255,255,255)",
+              });
+            }
+            return colors.sort((a, b) => b.min - a.min);
+          };
+          const getMaxValue = (value) => {
+            // 根据污染物类型调整最大值
+            // let pollutant = queryParams.value.pollutant;
+            if (value >= 500) return value * 0.25;
+            else if (value >= 400) return value * 0.3;
+            else if (value >= 300) return value * 0.375;
+            else if (value >= 200) return value * 0.5;
+            else if (value >= 150) return value * 0.75;
+            else return value;
+          };
+          const drawConcentrationBaseMap = () => {
+            let data = [];
+            let maxValue = 0;
+            let minValue = 0;
+            let pollutant = queryParams.value.pollutant;
+            if (baseData.value) {
+              let timeBaseData = baseData.value.time_series || [];
+              let targetTimeData = timeBaseData[queryParams.value.time] || null;
+              if (targetTimeData) {
+                maxValue = targetTimeData.max_value;
+                minValue = targetTimeData.min_value;
+                // 格式化数据
+                data = targetTimeData.data || [];
+              }
+            }
+
+            if (pollutant == "CO_UGM3") {
+              // CO单位转换为mg/m3
+              maxValue = maxValue / 1000;
+              minValue = minValue / 1000;
+              data = data.map((row) =>
+                row.map((value) => {
+                  if (value === null || value === undefined || isNaN(value)) {
+                    return null;
+                  }
+                  return value / 1000;
+                })
+              );
+            }
+            maxValue = getMaxValue(maxValue);
+            let formattedData = data.map((_data, index) => {
+              let yIndex = index;
+              return _data.map((value, xIndex) => ({
+                value: value,
+                xIndex,
+                yIndex,
+              }));
+            });
+            let colorData = [];
+            if (isPlaying.value) {
+              colorData = baseColorData.value;
+            } else {
+              colorData = resetColorOption({ maxValue, minValue });
+              baseColorData.value = colorData;
+            }
+            let unit =
+              queryParams.value.pollutant == "CO_UGM3"
+                ? "毫克/立方米"
+                : "微克/立方米";
+
+            if (mapBounds.value == null) {
+              console.error("地图边界未定义，无法绘制网格");
+              return;
+            }
+            mapComponentDom.initCanvasDraw(
+              formattedData,
+              colorData,
+              20,
+              mapBounds.value,
+              true,
+              unit
+            );
+          };
+
+          const drawBaseMap = () => {
+            drawConcentrationBaseMap();
+          };
+          const setMapCenter = () => {
+            let center = [39.904989, 116.405285];
+            let latLngPoint = L.latLng(center[0], center[1]);
+            myMap.value.setView(latLngPoint, 4);
+          };
+          /**
+           * 获取DOM的尺寸信息
+           * @returns {Object} 包含视口尺寸和屏幕尺寸的对象
+           */
+          function getBrowserResolution() {
+            // 视口尺寸（当前可见区域，含滚动条，不含浏览器工具栏）
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            // 视口尺寸（不含滚动条，兼容性稍好）
+            const viewportClientWidth = document.documentElement.clientWidth;
+            const viewportClientHeight = document.documentElement.clientHeight;
+
+            // 屏幕整体尺寸（设备物理分辨率，不受窗口大小影响）
+            const screenWidth = screen.width;
+            const screenHeight = screen.height;
+
+            // 屏幕可用尺寸（扣除系统任务栏等）
+            const screenAvailWidth = screen.availWidth;
+            const screenAvailHeight = screen.availHeight;
+
+            return {
+              viewport: {
+                width: viewportWidth, // 含滚动条的视口宽度
+                height: viewportHeight, // 含滚动条的视口高度
+                clientWidth: viewportClientWidth, // 不含滚动条的视口宽度
+                clientHeight: viewportClientHeight, // 不含滚动条的视口高度
+              },
+              screen: {
+                width: screenWidth, // 屏幕物理宽度
+                height: screenHeight, // 屏幕物理高度
+                availWidth: screenAvailWidth, // 屏幕可用宽度（不含任务栏等）
+                availHeight: screenAvailHeight, // 屏幕可用高度（不含任务栏等）
+              },
+            };
+          }
+
+          function set3DDynamicResolution(width, height) {
+            if (window.ue4Api.DynamicResolutionFun) {
+              window.ue4Api.DynamicResolutionFun({ width, height });
+            }
+          }
+          function switch3DView(wind, zhuzhuang, threeD, jinjingji) {
+            if (window.ue4Api.SwitchFun) {
+              window.ue4Api.SwitchFun({
+                wind,
+                zhuzhuang,
+                threeD,
+                jinjingji,
+              });
+            }
+          }
+          function setTheAreaScope(gridInfo) {
+            if (window.ue4Api.SetTheAreaScopeFun) {
+              window.ue4Api.SetTheAreaScopeFun(gridInfo);
+            }
+          }
+          function settingupLegend(title, maxValue, minValue) {
+            if (window.ue4Api.SettingupLegendFun) {
+              window.ue4Api.SettingupLegendFun(title, maxValue, minValue);
+            }
+          }
+          function set_area_scope(isJJJ = false) {
+            var gridInfo_jjj = {
+              Rows: 412,
+              Cols: 499,
+              Corners: {
+                UpperLeft: {
+                  Row: 0,
+                  Col: 498,
+                  Lat: 44.8364334106445,
+                  Lon: 108.602966308594,
+                },
+                UpperRight: {
+                  Row: 411,
+                  Col: 498,
+                  Lat: 44.8364334106445,
+                  Lon: 127.743774414062,
+                },
+                LowerLeft: {
+                  Row: 0,
+                  Col: 0,
+                  Lat: 32.028190612793,
+                  Lon: 108.602966308594,
+                },
+                LowerRight: {
+                  Row: 411,
+                  Col: 0,
+                  Lat: 32.028190612793,
+                  Lon: 127.743774414062,
+                },
+              },
+            };
+            var gridInfo_china = {
+              Rows: 273,
+              Cols: 292,
+              Corners: {
+                UpperLeft: {
+                  Row: 0,
+                  Col: 291,
+                  Lat: 66.5830230712891,
+                  Lon: 41.0759887695312,
+                },
+                UpperRight: {
+                  Row: 272,
+                  Col: 291,
+                  Lat: 66.5830230712891,
+                  Lon: 168.924011230469,
+                },
+                LowerLeft: {
+                  Row: 0,
+                  Col: 0,
+                  Lat: -1.50093841552734,
+                  Lon: 41.0759887695312,
+                },
+                LowerRight: {
+                  Row: 272,
+                  Col: 0,
+                  Lat: -1.50093841552734,
+                  Lon: 168.924011230469,
+                },
+              },
+            };
+            setTheAreaScope(isJJJ ? gridInfo_jjj : gridInfo_china);
+          }
+          const reset3DPath = (path) => {
+            // D:\\GiveDemo\\app\\data\\nc_json  变成 D:\\Json
+            return `D:\\Json\\${path
+              .replace(/\\/g, "/")
+              .split("data/nc_json/")[1]
+              .replace(/\//g, "\\")}`;
+          };
+          const draw3DBar = async (
+            pollutant_name,
+            time_point,
+            layer,
+            draw_china = true
+          ) => {
+            if (!window.ue4Api) {
+              let resolution = getBrowserResolution();
+              window.ue4Api = threeDFrameRef.value.contentWindow.ue4Api;
+              set3DDynamicResolution(
+                resolution.viewport.clientWidth,
+                resolution.viewport.clientHeight
+              );
+            }
+
+            set_area_scope();
+            switch3DView(0, 1, 0, 1);
+            settingupLegend("PM2.5污染浓度 微克/立方米", "150", "0");
+
+            var res = await fetch_nc_file(
+              pollutant_name,
+              time_point,
+              layer,
+              null,
+              null,
+              "DrawPollutantBarChartJsonFun"
+            );
+            if (window.ue4Api.DrawPollutantBarChartJsonFun) {
+              let path = reset3DPath(
+                `D:\\GiveDemo\\app\\${res.file_path[0].replace(/\//g, "\\")}`
+              );
+              window.ue4Api.DrawPollutantBarChartJsonFun(path);
+            }
+
+            if (!draw_china) return;
+            res = await fetch_nc_file_cn27(
+              pollutant_name,
+              time_point,
+              layer,
+              null,
+              null,
+              "DrawPollutantBarChartJsonFun"
+            );
+            if (window.ue4Api.DrawPollutantBarChartJsonFun) {
+              window.ue4Api.DrawPollutantBarChartJsonFun(
+                reset3DPath(
+                  `D:\\GiveDemo\\app\\${res.file_path[0].replace(/\//g, "\\")}`
+                )
+              );
+            }
+          };
+          async function draw3DHeatmap(
+            pollutant_name,
+            time_point,
+            draw_china = false
+          ) {
+            if (!window.ue4Api) {
+              let resolution = getBrowserResolution();
+              window.ue4Api = threeDFrameRef.value.contentWindow.ue4Api;
+              set3DDynamicResolution(
+                resolution.viewport.clientWidth,
+                resolution.viewport.clientHeight
+              );
+            }
+
+            settingupLegend("PM2.5污染浓度 微克/立方米", "150", "0");
+            set_area_scope();
+            switch3DView(0, 0, 1, 1);
+
+            var file_paths = [];
+
+            var layer_count = 10;
+            for (var i = 0; i < layer_count; i++) {
+              var res = await fetch_nc_file(
+                pollutant_name,
+                time_point,
+                i,
+                null,
+                null,
+                "Draw3DHeatmapJsonFun"
+              );
+              file_paths.push(
+                reset3DPath(
+                  `D:\\GiveDemo\\app\\${res.file_path[0].replace(/\//g, "\\")}`
+                )
+              );
+            }
+            if (window.ue4Api.Draw3DHeatmapJsonFun) {
+              window.ue4Api.Draw3DHeatmapJsonFun(file_paths);
+            }
+
+            if (!draw_china) return;
+            file_paths = [];
+            for (var i = 0; i < layer_count; i++) {
+              var res = await fetch_nc_file_cn27(
+                pollutant_name,
+                time_point,
+                i,
+                null,
+                null,
+                "Draw3DHeatmapJsonFun"
+              );
+              file_paths.push(
+                reset3DPath(
+                  `D:\\GiveDemo\\app\\${res.file_path[0].replace(/\//g, "\\")}`
+                )
+              );
+            }
+            if (window.ue4Api.Draw3DHeatmapJsonFun) {
+              window.ue4Api.Draw3DHeatmapJsonFun(file_paths);
+            }
+          }
+          const draw3DWind = (time, draw_china = true) => {
+            if (!window.ue4Api) {
+              let resolution = getBrowserResolution();
+              window.ue4Api = threeDFrameRef.value.contentWindow.ue4Api;
+              set3DDynamicResolution(
+                resolution.viewport.clientWidth,
+                resolution.viewport.clientHeight
+              );
+            }
+
+            set_area_scope();
+            switch3DView(1, 0, 0, 0);
+
+            if (window.ue4Api.WindRenderByJsonFun) {
+              window.ue4Api.WindRenderByJsonFun(
+                reset3DPath(
+                  `D:\\GiveDemo\\app\\data\\nc_json\\JJJWindJSON\\wind_uv_rg_t${time}_jjj_replaced.json`
+                )
+              );
+              if (!draw_china) return;
+              window.ue4Api.WindRenderByJsonFun(
+                reset3DPath(
+                  `D:\\GiveDemo\\app\\data\\nc_json\\WindJSON\\wind_uv_rg_t${time}_china_replaced.json`
+                )
+              );
+            }
+          };
+          const threeDMapLayerChange = async () => {
+            let pollutant_name = queryParams.value.pollutant;
+            let dateLabel = dateDayOptions.value.find(
+              (item) => item.value === queryParams.value.timeDay
+            )?.label;
+            let time_point = `${dateLabel} ${queryParams.value.time
+              .toString()
+              .padStart(2, "0")}:00:00`;
+            let layer = +queryParams.value.layer;
+            if (threeDMapLayerSelected.value === "bar") {
+              await draw3DBar(pollutant_name, time_point, layer);
+            } else if (threeDMapLayerSelected.value === "heat") {
+              await draw3DHeatmap(pollutant_name, time_point);
+            } else if (threeDMapLayerSelected.value === "wind") {
+              let time = `${queryParams.value.time
+                .toString()
+                .padStart(2, "0")}`;
+              draw3DWind(time);
+            }
+          };
+          const handleThreeDMap = async () => {
+            threeDMapSelect.value = !threeDMapSelect.value;
+            threeDFrameVisible.value = threeDMapSelect.value;
+            await nextTick();
+            await handleMapDraw();
+          };
+          const getModelAttributeData = async (fileName) => {
+            let params = {
+              fileName: fileName,
+            };
+            let res = await fetch_ctm_model_attribute(params);
+            return res.data;
+          };
+          const resetPollutantOptions = (variables) => {
+            let list = Object.keys(variables);
+            let pollutantList = list.map((item) => {
+              return {
+                value: item,
+                label: item === "PM25_TOT"? "PM2.5" : variables[item].name,
+              };
+            });
+            let dataType = queryParams.value.dataType;
+            pollutantOptions.value = pollutantList;
+          };
+          const resetLayerOptions = (layerData) => {
+            let layers = [];
+            for (let i = 0; i < layerData; i++) {
+              layers.push({
+                value: i,
+                label: `第${i + 1}层`,
+              });
+            }
+            layerOptions.value = layers;
+          };
+
+          // 计算用于在标题下显示的污染物与层信息
+          const displayPollutantLayer = computed(() => {
+            const polCode = queryParams.value.pollutant;
+            const polOpt = pollutantOptions.value.find((p) => p.value === polCode);
+            const polLabel = polOpt ? polOpt.label : polCode;
+            const layerVal = queryParams.value.layer;
+            const layerOpt = layerOptions.value.find((l) => String(l.value) === String(layerVal));
+            const layerLabel = layerOpt ? layerOpt.label : `第${Number(layerVal) + 1}层`;
+            return `${polLabel} · ${layerLabel}`;
+          });
+          const resetDataOption = (globalAttributes, start_time, end_time) => {
+            let { SDATE, TSTEP } = globalAttributes;
+            // 计算时间选项 SDATE 格式："2022239"，2022年第239天
+            let year = parseInt(SDATE.toString().substring(0, 4));
+            let dayOfYear = parseInt(SDATE.toString().substring(4, 7));
+            let startDate = new Date(year, 0); // 当年1月1日
+            startDate.setDate(dayOfYear); // 设置为第dayOfYear天
+            // TSTEP 分两种 "10000" 和 "240000" 格式，分别表示每小时和每天
+            let stepHours = 1;
+            if (TSTEP.toString() === "240000") {
+              stepHours = 24;
+            }
+            let startDateTime = new Date(startDate);
+            startDateTime.setHours(
+              startDateTime.getHours() + stepHours * start_time
+            );
+            // 将全部时间点生成选项
+            let dateOptionsArr = [];
+            while (start_time <= end_time) {
+              let year = startDateTime.getFullYear();
+              let month = startDateTime.getMonth() + 1;
+              let date = startDateTime.getDate();
+              let hours = startDateTime.getHours();
+              let dateStr = `${year.toString().padStart(4, "0")}-${month
+                .toString()
+                .padStart(2, "0")}-${date.toString().padStart(2, "0")}`;
+              let label = `${hours.toString().padStart(2, "0")}:00 - ${(hours +
+                1 ==
+              24
+                ? 0
+                : hours + 1
+              )
+                .toString()
+                .padStart(2, "0")}:00`;
+              dateOptionsArr.push({ label, date: dateStr, value: start_time });
+
+              startDateTime.setHours(startDateTime.getHours() + stepHours);
+              start_time++;
+            }
+            dateTimeAllData.value = dateOptionsArr;
+            // 按天分组
+            let dateDayOptionsArr = [];
+            let daySet = new Set();
+            dateOptionsArr.forEach((item) => {
+              if (!daySet.has(item.date)) {
+                daySet.add(item.date);
+                dateDayOptionsArr.push({
+                  label: item.date,
+                  value: item.date,
+                });
+              }
+            });
+            dateDayOptions.value = dateDayOptionsArr;
+          };
+          const getMapBoundData = async () => {
+            mapBounds.value = await getWgs84BoundsFromIOAPI(
+              ncAttributeData.value.global_attributes
+            );
+          };
+          const handleDayChange = async () => {
+            let value = queryParams.value.timeDay;
+            dateOptions.value = dateTimeAllData.value.filter(
+              (item) => item.date === value
+            );
+            queryParams.value.time = dateOptions.value[0]?.value || 0;
+          };
+          const initData = async () => {
+            let fileName =
+              "extracted_first10_layers_steps1_96_O3_SO2_NO2_CO_PM25_TOT_PM10.nc";
+            try {
+              let attributeData = await getModelAttributeData(fileName);
+
+              ncAttributeData.value = attributeData;
+              let end_time = attributeData.dimensions.TSTEP.size - 1;
+              let layerData = attributeData.dimensions.LAY.size;
+              await Promise.all([
+                resetPollutantOptions(attributeData.variables),
+                resetDataOption(attributeData.global_attributes, 0, end_time),
+                resetLayerOptions(layerData),
+                getMapBoundData(),
+              ]);
+              queryParams.value.fileName = fileName;
+              queryParams.value.pollutant = "PM25_TOT";
+              queryParams.value.timeDay =
+                dateDayOptions.value[0]?.value || "2025-11-17";
+              queryParams.value.layer = layerOptions.value[0]?.value || 0;
+
+              handleDayChange();
+            } catch (error) {
+              console.error(
+                "获取文件属性失败，所选日期的数据文件不存在",
+                error
+              );
+              ElMessage.error("获取文件属性失败，所选日期的数据文件不存在");
+            }
+          };
+          // const initChinaData = async () => {
+          //   let fileName =
+          //     "extracted_first10_layers_steps50_145_O3_SO2_NO2_CO_PM25_TOT_PM10.nc";
+          //   try {
+          //     let attributeData = await getModelAttributeData(fileName);
+          //     let data = await getWgs84BoundsFromIOAPI(
+          //       attributeData.global_attributes
+          //     );
+          //     console.log("中国区域边界数据:", data);
+          //     console.log("中国区域投影定义:", attributeData);
+          //   } catch (error) {}
+          // };
+          const updateMaskLayer = () => {
+            let chinaArray = [
+              [56.132617308505615, 40.98666927775727],
+              [56.132617308505615, 169.01333072224276],
+              [-1.7735081079264696, 135.08644966659034],
+              [-1.7735081079264696, 74.91355033340966],
+              [56.132617308505615, 40.98666927775727],
+            ];
+            let targetArray = [
+              [baseMapCorners.value[0][1], baseMapCorners.value[0][0]],
+              [baseMapCorners.value[1][1], baseMapCorners.value[1][0]],
+              [baseMapCorners.value[3][1], baseMapCorners.value[3][0]],
+              [baseMapCorners.value[2][1], baseMapCorners.value[2][0]],
+              [baseMapCorners.value[0][1], baseMapCorners.value[0][0]],
+            ];
+            console.log("目标区域坐标:", targetArray);
+            var plyall = L.polygon([chinaArray, targetArray], {
+              color: "transparent",
+              fillColor: "#0a0a2a",
+              fillOpacity: 1,
+            });
+            mapMarkersLayer.value.clearLayers();
+            mapMarkersLayer.value.addLayer(plyall);
+            if (myMap.value) {
+              myMap.value.fitBounds(mapBounds.value, { maxZoom: 6 });
+            }
+          };
+          onMounted(async () => {
+            await nextTick();
+            await initMap();
+
+            await initData();
+
+            await applyFilters();
+            updateMaskLayer();
+            // await getStationData();
+          });
+
+          // 组件卸载时清理
+          onUnmounted(() => {
+            pausePlayback(); // 停止播放
+            if (mapComponentDom) {
+              mapComponentDom.destroy();
+              mapComponentDom = null;
+            }
+          });
+
+          return {
+            threeDMapSelect,
+            sidebarVisible,
+            commonMapContentRef,
+            queryParams,
+            dateOptions,
+            dateDayOptions,
+            layerOptions,
+            pollutantOptions,
+            stationSelect,
+            meteorologySelect,
+            threeDMapLayerSelected,
+            isPlaying,
+            progressPercentage,
+            currentTimeLabel,
+            currentDayLabel,
+            playbackSpeed,
+            threeDFrameVisible,
+            threeDFrameRef,
+            displayPollutantLayer,
+            handleDayChange,
+            addStationsLayer,
+            addMeteorologyLayer,
+            applyFilters,
+            togglePlayback,
+            seekProgress,
+            updatePlaybackSpeed,
+            onTimeChange,
+            toggleSidebar,
+            threeDMapLayerChange,
+            handleThreeDMap,
+          };
+        },
+      }).mount("#app");
+    </script>
+  </body>
+</html>

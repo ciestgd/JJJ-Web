@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>任务结果展示 - 京津冀新一代大气环境智能模型系统（NEXT+）</title>
+    <script src="./utils/vue.global.js"></script>
+    <script src="./utils/echarts.min.js"></script>
+    <link rel="stylesheet" href="./utils/element-plus/index.css" />
+    <link rel="stylesheet" href="./assets/styles/common.css" />
+    <link rel="stylesheet" href="./utils/leaflet/leaflet.css" crossorigin="" />
+    <script src="./utils/leaflet/leaflet.js" crossorigin=""></script>
+    <!-- 引入proj4依赖 -->
+    <script src="./utils/proj4.js"></script>
+    <script src="./utils/proj4leaflet.js"></script>
+    <script src="./utils/element-plus/index.js"></script>
+    <script src="./utils/echarts.min.js"></script>
+    <link rel="stylesheet" href="./MapData/map.css" />
+    <style>
+      /* 页面标题 */
+      .page-header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .page-title {
+        font-size: 2.5rem;
+        color: #00eeff;
+        text-shadow: 0 0 15px rgba(0, 238, 255, 0.5);
+        margin-bottom: 10px;
+      }
+
+      .page-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .task-info {
+        background: rgba(25, 35, 70, 0.3);
+        border: 1px solid rgba(0, 238, 255, 0.3);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .task-details {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+      }
+
+      .task-detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .task-detail-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .task-detail-value {
+        font-size: 1.1rem;
+        color: #00eeff;
+        font-weight: bold;
+      }
+
+      .back-btn {
+        background: linear-gradient(45deg, #0066cc, #00eeff);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+      }
+
+      .back-btn:hover {
+        background: linear-gradient(45deg, #00eeff, #0066cc);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 238, 255, 0.3);
+      }
+
+      /* 结果展示区域 */
+      .results-container {
+        width: 100%;
+        flex: 1;
+        /* overflow: hidden; */
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 10px;
+        justify-content: flex-start;
+        /* align-items: flex-start; */
+      }
+
+      .result-module {
+        background: rgba(25, 35, 70, 0.3);
+        border: 1px solid rgba(0, 238, 255, 0.3);
+        border-radius: 15px;
+        padding: 15px;
+        transition: all 0.3s ease;
+        overflow: hidden;
+        cursor: pointer;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        width: calc((100% - 30px) / 3);
+        height: calc(50% - 10px);
+      }
+      .result-module .result-module-header {
+        width: 100%;
+        height: 96px; /* 增高标题区域以容纳两行描述 */
+        box-sizing: border-box;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start; /* 顶部对齐，便于显示两行描述 */
+        padding-top: 10px;
+        border-bottom: 1px solid rgba(0, 238, 255, 0.2);
+        margin-bottom: 12px;
+      }
+      .module-title .module-description {
+        margin-top: 6px;
+        font-size: 13px; /* 字体更小 */
+        color: rgba(255, 255, 255, 0.7);
+        line-height: 1.2;
+        max-height: 2.4em; /* 最多显示两行 */
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        word-break: break-word;
+      }
+
+      .result-module:hover {
+        border-color: #00eeff;
+        box-shadow: 0 10px 30px rgba(0, 238, 255, 0.2);
+        transform: translateY(-5px);
+      }
+
+      .result-module::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #00eeff, #0099cc, #00eeff);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .result-module:hover::before {
+        opacity: 1;
+      }
+
+      .module-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        /* padding-bottom: 15px;  */
+        /* margin-bottom: 20px;
+        padding-bottom: 15px; */
+        /* border-bottom: 1px solid rgba(0, 238, 255, 0.2); */
+      }
+
+      .module-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(45deg, #00eeff, #0099cc);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+      }
+
+      .module-title {
+        font-size: 1.4rem;
+        color: #00eeff;
+        font-weight: bold;
+      }
+
+      .module-content {
+        width: 100%;
+        flex: 1;
+        box-sizing: border-box;
+        background: rgba(10, 20, 50, 0.3);
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(0, 238, 255, 0.1);
+      }
+
+      .vertical-heatmap-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      .vertical-heatmap {
+        width: 100%;
+        height: 100%;
+      }
+
+      .vertical-heatmap-message {
+        position: absolute;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0 24px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.8);
+        background: rgba(5, 15, 35, 0.65);
+        backdrop-filter: blur(2px);
+        font-size: 0.95rem;
+        line-height: 1.6;
+      }
+
+      /* 添加进入详情的提示 */
+      .enter-detail {
+        background: rgba(0, 238, 255, 0.2);
+        color: #00eeff;
+        padding: 8px 14px; /* 更大的内边距 */
+        border-radius: 16px;
+        font-size: 0.9rem;
+        width: 90px; /* 保证按钮显示完整 */
+        text-align: center;
+        align-self: flex-start; /* 与标题顶部对齐 */
+        margin-top: 6px;
+        opacity: 0;
+        transition: opacity 0.24s ease, transform 0.18s ease;
+      }
+
+      .result-module:hover .enter-detail {
+        opacity: 1;
+        transform: translateY(-2px);
+      }
+
+      .chart-placeholder {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 1.1rem;
+        text-align: center;
+      }
+
+      .chart-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1rem;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .chart-loading .spinner {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 3px solid rgba(0, 238, 255, 0.2);
+        border-top-color: #00eeff;
+        animation: spin 1s linear infinite;
+      }
+
+      .module-description {
+        margin-top: 15px;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+
+      /* 模拟数据展示 */
+      .data-visualization {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 238, 255, 0.1),
+          rgba(0, 153, 204, 0.05)
+        );
+        border-radius: 10px;
+        padding: 20px;
+        position: relative;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .data-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+      }
+
+      .data-item {
+        text-align: center;
+        padding: 10px;
+        background: rgba(0, 238, 255, 0.1);
+        border-radius: 8px;
+        border: 1px solid rgba(0, 238, 255, 0.2);
+      }
+
+      .data-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 5px;
+      }
+
+      .data-value {
+        font-size: 1.2rem;
+        color: #00eeff;
+        font-weight: bold;
+      }
+
+      .data-unit {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      /* 性能指标表格 */
+      .performance-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+
+      .performance-table th,
+      .performance-table td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid rgba(0, 238, 255, 0.2);
+      }
+
+      .performance-table th {
+        background: rgba(0, 238, 255, 0.1);
+        color: #00eeff;
+        font-weight: bold;
+      }
+
+      .performance-table td {
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .performance-value {
+        color: #00eeff;
+        font-weight: bold;
+      }
+
+      /* 化学组分图表 */
+      .component-chart {
+        height: 200px;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 238, 255, 0.05),
+          rgba(0, 153, 204, 0.02)
+        );
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .pie-chart-placeholder {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: conic-gradient(
+          #00eeff 0deg 90deg,
+          #0099cc 90deg 180deg,
+          #006699 180deg 270deg,
+          #003366 270deg 360deg
+        );
+        position: relative;
+      }
+
+      .pie-chart-placeholder::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80px;
+        height: 80px;
+        background: #0a0a2a;
+        border-radius: 50%;
+      }
+
+      /* 垂直分布图 */
+      .vertical-profile {
+        height: 200px;
+        background: linear-gradient(
+          to top,
+          rgba(0, 238, 255, 0.1) 0%,
+          rgba(0, 238, 255, 0.05) 50%,
+          rgba(0, 238, 255, 0.02) 100%
+        );
+        border-radius: 8px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .altitude-lines {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 39px,
+          rgba(0, 238, 255, 0.2) 40px
+        );
+      }
+
+      .profile-data {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+      }
+
+      /* 响应式设计 */
+      @media (max-width: 768px) {
+        .results-container {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .task-details {
+          flex-direction: column;
+          gap: 15px;
+          align-items: flex-start;
+        }
+
+        .task-info {
+          flex-direction: column;
+          gap: 20px;
+          align-items: flex-start;
+        }
+
+        .data-grid {
+          grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        }
+
+        .page-title {
+          font-size: 2rem;
+        }
+
+        .nav-menu {
+          display: none;
+        }
+      }
+
+      #emissionMapContent,
+      #spatialMapContent,
+      #stationChartContent,
+      #pm25Component {
+        width: 100%;
+        height: 100%;
+        background: var(--bg-primary);
+      }
+      /* 动画效果 */
+      @keyframes fadeInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .result-module {
+        animation: fadeIn 0.6s ease;
+      }
+
+      .result-module:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+
+      .result-module:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+
+      .result-module:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+
+      .result-module:nth-child(4) {
+        animation-delay: 0.4s;
+      }
+
+      .result-module:nth-child(5) {
+        animation-delay: 0.5s;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container" id="app">
+      <!-- 头部导航 -->
+      <header>
+        <div class="logo-section">
+          <!-- <div class="logo">🌍</div> -->
+          <div class="platform-name">
+            京津冀新一代大气环境智能模型系统（NEXT+）
+          </div>
+        </div>
+
+        <nav class="nav-menu">
+          <a
+            href="index.html"
+            class="nav-item active"
+            >首页</a
+          >
+          <div class="nav-dropdown">
+            <a href="#" class="nav-item dropdown-toggle">应用场景</a>
+            <div class="dropdown-menu">
+              <a href="#" class="dropdown-item">空气质量预报</a>
+              <a href="#" class="dropdown-item">重污染应对</a>
+              <a href="long-term-planning-setup.html" class="dropdown-item"
+                >中长期规划</a
+              >
+            </div>
+          </div>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-item dropdown-toggle">模型集成</a>
+            <div class="dropdown-menu">
+              <a href="#" class="dropdown-item">气象模型</a>
+              <a href="#" class="dropdown-item">排放清单</a>
+              <a href="cmaq-setup-wizard.html" class="dropdown-item"
+                >化学传输</a
+              >
+              <a href="#" class="dropdown-item">溯源模型</a>
+              <a href="#" class="dropdown-item">预报模型</a>
+              <a href="#" class="dropdown-item">调控模型</a>
+            </div>
+          </div>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-item dropdown-toggle">任务调度</a>
+            <div class="dropdown-menu">
+              <a href="task-management.html" class="dropdown-item">任务管理</a>
+              <a href="#" class="dropdown-item">定时任务</a>
+              <a href="#" class="dropdown-item">实时调度</a>
+              <a href="#" class="dropdown-item">性能监控</a>
+            </div>
+          </div>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-item dropdown-toggle">数据分析</a>
+            <div class="dropdown-menu">
+              <a href="#" class="dropdown-item">数据可视化</a>
+              <a href="#" class="dropdown-item">统计分析</a>
+              <a href="#" class="dropdown-item">趋势预测</a>
+              <a href="#" class="dropdown-item">报告生成</a>
+            </div>
+          </div>
+        </nav>
+
+        <div class="user-section">
+          <div class="user-info">
+            <div class="user-avatar">U</div>
+            <div class="username">
+              用户: <span id="current-user">admin</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="container-main">
+        <div style="text-align: right; margin-bottom: 10px">
+          <a href="task-management.html" class="back-btn">返回任务管理</a>
+        </div>
+
+        <!-- 结果展示区域 -->
+        <div class="results-container">
+          <!-- 模块0: 排放清单 -->
+          <div class="result-module">
+            <div class="result-module-header">
+              <div class="module-header">
+                <div class="module-icon">🏭</div>
+                <div class="module-title">
+                  <h3 class="module-title">排放清单</h3>
+                  <div class="module-description">
+                    展示京津冀区域内主要污染物排放的空间分布特征。
+                  </div>
+                </div>
+              </div>
+              <div
+                class="enter-detail"
+                @click="openDetailModule('emissions-inventory')"
+              >
+                详情 →
+              </div>
+            </div>
+
+            <div class="module-content">
+              <div id="emissionMapContent" ref="emissionMapContentRef"></div>
+            </div>
+          </div>
+
+          <!-- 模块1: 污染物空间分布及时空演化 -->
+          <div class="result-module">
+            <div class="result-module-header">
+              <div class="module-header">
+                <div class="module-icon">🌍</div>
+                <div class="module-title">
+                  <h3 class="module-title">污染物空间分布及时空演化</h3>
+                  <div class="module-description">
+                    展示京津冀区域内主要污染物的空间分布特征，包括污染物浓度场、站点数据叠加、气象场叠加等功能。
+                  </div>
+                </div>
+              </div>
+              <div
+                class="enter-detail"
+                @click="openDetailModule('spatial-distribution')"
+              >
+                详情 →
+              </div>
+            </div>
+
+            <div class="module-content">
+             <div id="spatialMapContent" ref="spatialMapContentRef"></div>
+            </div>
+          </div>
+
+          <!-- 模块2: 模型校验及性能评估 -->
+          <div class="result-module">
+            <div class="result-module-header">
+              <div class="module-header">
+                <div class="module-icon">📊</div>
+                <div class="module-title">
+                  <h3 class="module-title">模型校验及性能评估</h3>
+                  <div class="module-description">
+                    通过与观测数据对比，评估模型预测精度，包括各项统计指标和详细的对比分析图表。
+                  </div>
+                </div>
+              </div>
+              <div
+                class="enter-detail"
+                @click="openDetailModule('model-validation')"
+              >
+                详情 →
+              </div>
+            </div>
+
+            <div class="module-content">
+              <div id="stationChartContent" ref="stationChartContentRef"></div>
+            </div>
+          </div>
+
+          <!-- 模块3: PM2.5化学组分分析 -->
+          <div class="result-module">
+            <div class="result-module-header">
+              <div class="module-header">
+                <div class="module-icon">⚗️</div>
+                <div class="module-title">
+                  <h3 class="module-title">PM2.5化学组分分析</h3>
+                  <div class="module-description">
+                    分析PM2.5的化学组分构成，包括各组分的时空分布特征和来源贡献分析。
+                  </div>
+                </div>
+              </div>
+              <div
+                class="enter-detail"
+                @click="openDetailModule('chemical-composition')"
+              >
+                详情 →
+              </div>
+            </div>
+
+            <div class="module-content">
+              <div id="pm25Component" ref="pm25ComponentRef"></div>
+            </div>
+          </div>
+
+          <!-- 模块4: 垂直演化 -->
+          <div class="result-module">
+            <div class="result-module-header">
+              <div class="module-header">
+                <div class="module-icon">📈</div>
+                <div class="module-title">
+                  <h3 class="module-title">垂直演化</h3>
+                  <div class="module-description">
+                    展示污染物在不同高度层的垂直分布特征和边界层演化过程。
+                  </div>
+                </div>
+              </div>
+              <div
+                class="enter-detail"
+                @click="openDetailModule('vertical-evolution-new')"
+              >
+                详情 →
+              </div>
+            </div>
+
+            <div
+              id="verticalEvolution"
+              class="module-content"
+              style="display: flex; align-items: flex-start"
+            >
+              <div class="vertical-heatmap-container">
+                <div id="verticalHeatmapChart" class="vertical-heatmap">
+                  <!-- 垂直剖面数据 -->
+                </div>
+                <div
+                  id="verticalHeatmapMessage"
+                  class="vertical-heatmap-message"
+                >
+                  PM2.5 垂直剖面数据加载中...
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>&copy; 2024 京津冀新一代大气环境智能模型系统（NEXT+）. 版权所有</p>
+      </footer>
+    </div>
+    <script type="module">
+      window.addEventListener("DOMContentLoaded", function () {
+        // import * as echarts from './utils/echarts.min.js';
+        // 数据文件与 result-detail-vertical-evolution-new.html 保持一致
+        // const DATA_URL =
+        //   "./ctm_demo_resutl/ctm/filtered_PM25_components_7layers_steps49_72.json";
+        // const DATA_URL =
+        //   "./ctm_demo_resutl/ctm/five_layers_data_cn03_model_json/cn03_PM25_TOT_2024102500.json";
+        const POLLUTANT = "PM25_TOT";
+        const ROW_IDX = 147;
+        const TIME_IDX = 0;
+        const chartDom = document.getElementById("verticalHeatmapChart");
+        chartDom.innerHTML = "";
+        let chartInstance = null;
+        const DATA_URL =
+          "./ctm_demo_resutl/ctm/task_results/verticalHeatData_options.json";
+        fetch(DATA_URL)
+          .then((r) => r.json())
+          .then((res) => {
+            // const dataFull = res?.variables?.[POLLUTANT]?.data;
+            // let timeData = dataFull?.[TIME_IDX];
+            if (!res) {
+              chartDom.innerHTML =
+                '<div style="padding:24px;color:#ccc">无可用数据</div>';
+              return;
+            }
+            // const cols =
+            //   (timeData[0] && timeData[0][0] && timeData[0][0].length) || 0;
+            const cols = 499;
+            // 构造 heatmap 数据：x=列，y=层
+            // const heatData = res;
+            // 数据y轴整体上移一格，以便0刻度留空
+            const heatData = res.map(item => [item[0], item[1] + 1, item[2]]);
+            const layerCount = 10;
+            // for (let layerIdx = 0; layerIdx < layerCount; layerIdx++) {
+            //   const layerGrid = timeData[layerIdx];
+            //   if (!layerGrid) continue;
+            //   for (let colI = 0; colI < cols; colI++) {
+            //     const v = layerGrid[ROW_IDX] && layerGrid[ROW_IDX][colI];
+            //     const value = v === undefined || v === null ? NaN : Number(v);
+            //     heatData.push([colI, layerIdx, isNaN(value) ? null : value]);
+            //   }
+            // }
+            fetch("./ctm_demo_resutl/ctm/task_results/verticalHeatData_grid.json")
+             .then((r) => r.json())
+             .then((res2) => {
+                const tdata = res2;
+
+                const xLabels = Array.from({ length: cols }, (_, i) => `${tdata[i].lon.toFixed(1)}, ${tdata[i].lat.toFixed(1)}`);
+                // const yLabels = Array.from(
+                //   { length: layerCount },
+                //   (_, i) => `第${i+1}层`
+                // );
+                const yLabels = [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000];
+                // chartDom.style.minHeight = '520px';
+                chartInstance = echarts.init(chartDom, "dark");
+
+                const valueArray = heatData
+                  .filter((d) => d[2] !== null)
+                  .map((d) => d[2]);
+                const minVal = valueArray.length ? Math.min(...valueArray) : 0;
+                const maxVal = valueArray.length ? Math.max(...valueArray) : 1;
+                const colorList = [
+                  // { min: -5, max: 0, color: "#FEFEFE" },
+                  { min: 0, max: 5, color: "#DEF1FA" },
+                  { min: 5, max: 10, color: "#BEE6F9" },
+                  { min: 10, max: 15, color: "#9CD9F6" },
+                  { min: 15, max: 20, color: "#80C0E6" },
+                  { min: 20, max: 25, color: "#65A8D9" },
+                  { min: 25, max: 30, color: "#478DC8" },
+                  { min: 30, max: 35, color: "#479A9D" },
+                  { min: 35, max: 40, color: "#48A673" },
+                  { min: 40, max: 45, color: "#47B345" },
+                  { min: 45, max: 50, color: "#83C54C" },
+                  { min: 50, max: 55, color: "#C0D553" },
+                  { min: 55, max: 60, color: "#F8E75B" },
+                  { min: 60, max: 65, color: "#F6BE4A" },
+                  { min: 65, max: 70, color: "#F5953A" },
+                  { min: 70, max: 75, color: "#F36A29" },
+                  { min: 75, max: 80, color: "#E95228" },
+                  { min: 80, max: 85, color: "#DC3626" },
+                  { min: 85, max: 90, color: "#D11E26" },
+                  { min: 90, max: 95, color: "#BD1C21" },
+                  { min: 95, max: 100, color: "#A6181D" },
+                ];
+                // 原始 colorList 为 5 单位步长，这里合并为 10 单位步长以缩小 visualMap
+                const pieces = (function () {
+                  const res = [];
+                  for (let i = 0; i < colorList.length; i += 2) {
+                    const a = colorList[i];
+                    const b = colorList[i + 1] || a;
+                    res.push({
+                      min: a.min,
+                      max: b.max,
+                      label: `${a.min} - ${b.max}`,
+                      color: a.color,
+                    });
+                  }
+                  return res;
+                })();
+                // const option = {
+                //   tooltip: {
+                //     position: "top",
+                //     formatter: function (params) {
+                //       const x = params.data[0];
+                //       const y = params.data[1];
+                //       const val = params.data[2];
+                //       return `列: ${x}<br/>层: ${y}<br/>值: ${
+                //         val !== null ? Number(val).toFixed(4) : "N/A"
+                //       }`;
+                //     },
+                //   },
+                //   // grid: { top: 65, bottom: 65, left: 60, right: 120 },
+                //   xAxis: {
+                //     type: "category",
+                //     data: xLabels,
+                //     name: "列",
+                //     splitArea: { show: false },
+                //   },
+                //   yAxis: {
+                //     type: "category",
+                //     data: yLabels,
+                //     name: "层",
+                //     inverse: false,
+                //   },
+                //   visualMap: {
+                //     type: "piecewise",
+                //     pieces: pieces.length ? pieces : [{ min: minVal, max: maxVal }],
+                //     orient: "vertical",
+                //     right: 10,
+                //     top: "center",
+                //     inverse: false,
+                //     textStyle: { color: "#fff" },
+                //     outOfRange: { color: ["#FEFEFE", "#91161A"] },
+                //   },
+                //   series: [
+                //     {
+                //       name: "剖面",
+                //       type: "heatmap",
+                //       data: heatData,
+                //       label: { show: false },
+                //       emphasis: {
+                //         itemStyle: { borderColor: "#000", borderWidth: 1 },
+                //       },
+                //     },
+                //   ],
+                // };
+                const option = {
+                  tooltip: {
+                    confine: true,
+                    position: "top",
+                    formatter: function (params) {
+                      const x = params.data[0];
+                      const y = params.data[1];
+                      const val = params.data[2];
+                      return `列: ${x}<br/>高度: ${yLabels[y]}米<br/>值: ${val !== null ? Number(val).toFixed(2) : "N/A"}`;
+                    },
+                  },
+                  grid: { top: 35, bottom: 20, left: 10, right: 90, containLabel: true },
+                  xAxis: {
+                    type: "category",
+                    data: xLabels,
+                    // 不显示 x 轴右侧的名称
+                    splitArea: { show: false },
+                  },
+                  yAxis: {
+                    type: "category",
+                    data: yLabels,
+                    name: "高度（米）",
+                    inverse: false,
+                    position: 'left',
+                    nameLocation: 'end',
+                    nameGap: 10,
+                    nameTextStyle: { color: '#fff', fontSize: 12 },
+                    axisLabel: { color: '#fff', fontSize: 12, interval: 1 },
+                  },
+                  visualMap: {
+                    type: "piecewise",
+                    pieces: pieces.length
+                      ? pieces
+                      : [{ min: minVal, max: maxVal }],
+                    orient: "vertical",
+                    right: 6,
+                    top: "center",
+                    inverse: false,
+                    textStyle: { color: "#fff", fontSize: 10 },
+                    itemHeight: 10,
+                    itemWidth: 10,
+                    itemGap: 6,
+                    outOfRange: { color: ["#FEFEFE", "#91161A"] },
+                  },
+                  series: [
+                    {
+                      name: "剖面",
+                      type: "heatmap",
+                      data: heatData,
+                      label: { show: false },
+                      emphasis: {
+                        itemStyle: { borderColor: "#000", borderWidth: 1 },
+                      },
+                    },
+                  ],
+                };
+                
+                chartInstance.setOption(option);
+                setTimeout(() => chartInstance.resize(), 100);
+            })
+            
+          })
+          .catch((e) => {
+            console.log(e);
+            chartDom.innerHTML =
+              '<div style="padding:24px;color:#ccc">数据加载失败</div>';
+          });
+      });
+    </script>
+    <script type="module">
+      import chinaGeoJson from "./MapData/china.js";
+      import { MapComponent } from "./MapData/map-component.js";
+      const { ElLoading } = ElementPlus;
+      const { createApp, ref, onMounted, onUnmounted, watch, nextTick } = Vue;
+
+      createApp({
+        setup() {
+          const DEFAULT_LAMBERT_DEF =
+            "+proj=lcc +lat_1=25 +lat_2=45 +lon_0=105 +lat_0=35 +x_0=0 +y_0=0 +datum=WGS84  +units=m +no_defs";
+
+          const createMapContext = () => ({
+            containerRef: ref(null),
+            mapComponent: null,
+            mapInstance: ref(null),
+            mapBounds: ref(null),
+            mapMarkersLayer: ref(null),
+            baseMapCorners: ref([]),
+            lambertProjDef: ref(DEFAULT_LAMBERT_DEF),
+            imgUrlData: ref([]),
+            queryParams: ref({
+              defaultData: "默认输出数据",
+              pollutant: "PM25_TOT",
+              time: 0,
+              layer: "第1层",
+            }),
+          });
+
+          const emissionMapCtx = createMapContext();
+          const spatialMapCtx = createMapContext();
+
+          const emissionMapContentRef = emissionMapCtx.containerRef;
+          const spatialMapContentRef = spatialMapCtx.containerRef;
+
+          const allPmData = ref([]);
+          const stationChartContentRef = ref(null);
+          const pm25ComponentRef = ref(null);
+          const stationChart = ref(null);
+          const pm25ComponentChart = ref(null);
+          const isLambert = ref(true); // 是否为兰伯特投影
+          const allStationList = ref([]); // 所有站点数据
+          const allStationData = ref({}); // 按站点编码分组的站点数据
+          const stationModelData = ref({});
+
+          const pm25Loading = ref(null); // PM2.5 组分图表加载状态
+          // 污染物选项
+          const pollutantOptions = ref([
+            { label: "PM2.5", value: "PM25_TOT", translate: 1 },
+            { label: "NO2", value: "NO2", translate: 2.05 },
+            { label: "O3", value: "O3", translate: 2.14 },
+            { label: "SO2", value: "SO2", translate: 2.86 },
+            { label: "CO", value: "CO", translate: 1.25 },
+            { label: "PM10", value: "PM10", translate: 1 },
+          ]);
+          // 颜色配置
+          const colorList = ref([
+            { min: -5, max: 0, color: "#FEFEFE" },
+            { min: 0, max: 5, color: "#DEF1FA" },
+            { min: 5, max: 10, color: "#BEE6F9" },
+            { min: 10, max: 15, color: "#9CD9F6" },
+            { min: 15, max: 20, color: "#80C0E6" },
+            { min: 20, max: 25, color: "#65A8D9" },
+            { min: 25, max: 30, color: "#478DC8" },
+            { min: 30, max: 35, color: "#479A9D" },
+            { min: 35, max: 40, color: "#48A673" },
+            { min: 40, max: 45, color: "#47B345" },
+            { min: 45, max: 50, color: "#83C54C" },
+            { min: 50, max: 55, color: "#C0D553" },
+            { min: 55, max: 60, color: "#F8E75B" },
+            { min: 60, max: 65, color: "#F6BE4A" },
+            { min: 65, max: 70, color: "#F5953A" },
+            { min: 70, max: 75, color: "#F36A29" },
+            { min: 75, max: 80, color: "#E95228" },
+            { min: 80, max: 85, color: "#DC3626" },
+            { min: 85, max: 90, color: "#D11E26" },
+            { min: 90, max: 95, color: "#BD1C21" },
+            { min: 95, max: 100, color: "#A6181D" },
+            { min: 100, max: 105, color: "#91161A" },
+          ]);
+          /**
+           * 根据 IOAPI 数据参数，计算 WGS84 坐标系的地理边界
+           */
+          function getWgs84BoundsFromIOAPI(ctx, ioapiData) {
+            try {
+              const {
+                NCOLS,
+                NROWS,
+                XORIG,
+                YORIG,
+                XCELL,
+                YCELL,
+                P_ALP,
+                P_BET,
+                P_GAM,
+                YCENT,
+              } = ioapiData;
+
+              // 校验必要参数
+              const requiredParams = [
+                NCOLS,
+                NROWS,
+                XORIG,
+                YORIG,
+                XCELL,
+                YCELL,
+                P_ALP,
+                P_BET,
+                P_GAM,
+                YCENT,
+              ];
+              if (
+                requiredParams.some(
+                  (param) => param === undefined || param === null
+                )
+              ) {
+                throw new Error("IOAPI 数据缺少必要的投影或范围参数");
+              }
+              if (NCOLS <= 0 || NROWS <= 0 || XCELL <= 0 || YCELL <= 0) {
+                throw new Error(
+                  "NCOLS/NROWS/XCELL/YCELL 必须为正数（网格大小无效）"
+                );
+              }
+
+              const xMin = XORIG;
+              const xMax = XORIG + NCOLS * XCELL;
+              const yMax = YORIG + NROWS * YCELL;
+              const yMin = YORIG;
+
+              const lccProjDef = `+proj=lcc +lat_1=${P_ALP} +lat_2=${P_BET} +lon_0=${P_GAM} +lat_0=${YCENT} +x_0=0 +y_0=0 +datum=WGS84  +units=m +no_defs`;
+              ctx.lambertProjDef.value = lccProjDef;
+              const projectToWGS84 = proj4(lccProjDef, "EPSG:4326");
+
+              const corners = [
+                [xMin, yMax], // 左上角
+                [xMax, yMax], // 右上角
+                [xMin, yMin], // 左下角
+                [xMax, yMin], // 右下角
+              ].map((coord) => projectToWGS84.forward(coord));
+              console.log("corners---", corners);
+              ctx.baseMapCorners.value = corners;
+              return L.latLngBounds([
+                [corners[0][1], corners[0][0]],
+                [corners[3][1], corners[3][0]],
+              ]);
+            } catch (error) {
+              return [];
+            }
+          }
+
+          /**
+           * 将单个网络图片路径转换为 Blob URL
+           * @param {string} imageUrl - 网络图片路径
+           * @returns {Promise<string|null>} - 生成的 Blob URL 或 null（失败时）
+           */
+          async function convertSingleImageToBlobUrl(imageUrl) {
+            try {
+              const response = await fetch(imageUrl);
+              if (!response.ok) {
+                throw new Error(`请求失败: ${response.status} ${response.statusText}`);
+              }
+              const blob = await response.blob();
+              // 验证 Blob 类型是否为图片（可选，增强健壮性）
+              if (!blob.type.startsWith('image/')) {
+                throw new Error(`资源不是图片: ${blob.type}`);
+              }
+              return URL.createObjectURL(blob);
+            } catch (error) {
+              console.error(`处理图片 ${imageUrl} 失败:`, error.message);
+              return null; // 单个失败不影响其他
+            }
+          }
+
+          /**
+           * 批量将多个网络图片路径转换为 Blob URL 数组
+           * @param {string[]} imageUrls - 网络图片路径数组
+           * @returns {Promise<string[]>} - Blob URL 数组（失败项为 null）
+           */
+          async function batchConvertImagesToBlobUrls(imageUrls) {
+            if (!Array.isArray(imageUrls) || imageUrls.length === 0) {
+              console.warn("请传入有效的图片路径数组");
+              return [];
+            }
+
+            // 并行处理所有图片，返回结果数组
+            const blobUrls = await Promise.all(
+              imageUrls.map(url => convertSingleImageToBlobUrl(url))
+            );
+
+            return blobUrls;
+          }
+
+          const loadMapData = async (ctx) => {
+            try {
+              let global_attributes = {
+                IOAPI_VERSION:
+                  "ioapi-3.2: $Id: init3.F90 185 2020-08-28 16:49:45Z coats $ ",
+                EXEC_ID: "???????????????? ",
+                FTYPE: 1,
+                CDATE: 2025293,
+                CTIME: 32029,
+                WDATE: 2025293,
+                WTIME: 32029,
+                SDATE: 2024296,
+                STIME: 0,
+                TSTEP: 10000,
+                NTHIK: 1,
+                NCOLS: 499,
+                NROWS: 412,
+                NLAYS: 14,
+                NVARS: 148,
+                GDTYP: 2,
+                P_ALP: 25.0,
+                P_BET: 45.0,
+                P_GAM: 105.0,
+                XCENT: 105.0,
+                YCENT: 35.0,
+                XORIG: 327000.0,
+                YORIG: -145500.0,
+                XCELL: 3000.0,
+                YCELL: 3000.0,
+                VGTYP: 7,
+                VGTOP: 10000.0,
+                VGLVLS: [
+                  1.0, 0.993, 0.983, 0.97, 0.954, 0.934, 0.909, 0.88, 0.832,
+                  0.784, 0.735, 0.604, 0.398, 0.207, 0.0,
+                ],
+                GDNAM: "M_03_ZZ ",
+                UPNAM: "COMBINE ",
+              };
+              let result = await getWgs84BoundsFromIOAPI(ctx, global_attributes);
+              ctx.mapBounds.value = result;
+
+              let imgUrl = `${window.origin}/public/ctm_demo_resutl/ctm/1_layer_data_cn03_model_to_one_png/cn03_${ctx.queryParams.value.pollutant}_2024102800.png`;
+              let _imgUrl = await convertSingleImageToBlobUrl(imgUrl);
+              ctx.imgUrlData.value = [_imgUrl];
+            } catch (error) {
+              console.error("获取数据失败:", error);
+            }
+          };
+
+          const getColor = (value) => {
+            if (value === null || value === undefined || isNaN(value)) {
+              return "#000"; // 缺失值颜色
+            }
+            for (let i = 0; i < colorList.value.length; i++) {
+              const range = colorList.value[i];
+              if (value >= range.min && value <= range.max) {
+                return range.color;
+              }
+            }
+            // 检查是否有是否超出范围的颜色定义
+            if (value > colorList.value[0].max) {
+              return colorList.value[0].color;
+            } else if (
+              value < colorList.value[colorList.value.length - 1].min
+            ) {
+              return colorList.value[colorList.value.length - 1].color;
+            }
+            return "#fff"; // 超出范围颜色
+          };
+          const formatData = (value, pollutant, translateFactor) => {
+            if (value === null || value === undefined || isNaN(value)) {
+              return null; // 缺失值
+            }
+            let targetValue = value * translateFactor;
+            if (pollutant == "CO") {
+              targetValue = targetValue / 1000; // CO单位转换为 mg/m3
+            }
+            return targetValue;
+          };
+          const drawBaseMap = async (ctx) => {
+            if (!ctx.mapComponent || !ctx.mapBounds.value) return;
+
+            let data = ctx.imgUrlData.value || [];
+            let timeData = data[ctx.queryParams.value.time];
+            if (!timeData) return;
+
+            let colorData = [...colorList.value].sort((a, b) => b.min - a.min);
+            ctx.mapComponent.initCanvasDrawByImgUrl(
+              timeData,
+              colorData,
+              20,
+              ctx.mapBounds.value,
+              false
+            );
+          };
+          const focusOnDomain = (ctx) => {
+            if (!ctx.mapInstance.value || !ctx.mapBounds.value) return;
+            const bounds = ctx.mapBounds.value;
+            const bestFitZoom = ctx.mapInstance.value.getBoundsZoom(bounds, true);
+            const minZoom =
+              typeof ctx.mapInstance.value.getMinZoom === "function"
+                ? ctx.mapInstance.value.getMinZoom()
+                : 0;
+            const ZOOM_OFFSET = 1;
+            const targetZoom = Math.max(bestFitZoom - ZOOM_OFFSET, minZoom);
+            const center = bounds.getCenter();
+            ctx.mapInstance.value.setView(center, targetZoom);
+          };
+          const initMap = (ctx) => {
+            if (!ctx.containerRef.value) return;
+            ctx.mapComponent = new MapComponent(ctx.containerRef.value, {
+              isLambert: isLambert.value,
+              lambertProjDef: ctx.lambertProjDef.value,
+            });
+            ctx.mapInstance.value = ctx.mapComponent.getMap();
+            ctx.mapMarkersLayer.value = L.featureGroup().addTo(
+              ctx.mapInstance.value
+            );
+          };
+          // 打开详细模块页面
+          const openDetailModule = (moduleType) => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const taskId = urlParams.get("taskId") || "demo-task-001";
+            const taskName = urlParams.get("taskName") || "CMAQ模拟任务";
+
+            // 构建详细页面URL
+            const detailUrl = `result-detail-${moduleType}.html?taskId=${taskId}&taskName=${encodeURIComponent(
+              taskName
+            )}&module=${moduleType}`;
+            window.location.href = detailUrl;
+          };
+
+          const getStationData = async () => {
+            try {
+              let url =
+                "./selected_station_data/station-data_extracted_20241104_to_20241123.json";
+              let res = await fetch(url).then((response) => response.json());
+              let list = res || [];
+              allStationList.value = list;
+              allStationData.value = Object.groupBy(
+                list,
+                (item) => item.stationCode
+              );
+            } catch (error) {
+              console.error("获取站点数据失败:", error);
+              return {};
+            }
+          };
+          const getStationModelData = async () => {
+            let res = await fetch(
+              "./ctm_demo_resutl/ctm/model_extracted_first1_layers_steps89_568/extracted_first1_layers_steps89_568_PM25_TOT.json"
+            ).then((res) => res.json());
+            let data = res || [];
+            // 定义转换规则映射表，键为污染物类型，值为转换函数
+            const conversionRules = {
+              O3: (value) => value * 2.14,
+              SO2: (value) => value * 2.86,
+              NO2: (value) => value * 2.05,
+              CO: (value) => value * 1.25 * 1000, // 合并计算步骤
+            };
+            // 遍历数据并应用转换规则
+            for (const col in data) {
+              // 避免遍历原型链上的属性
+              if (!data.hasOwnProperty(col)) continue;
+
+              const colData = data[col];
+              for (const key in colData) {
+                if (!colData.hasOwnProperty(key)) continue;
+
+                const items = colData[key];
+                for (const item of items) {
+                  // 将值规范为数字并保留两位小数（若为 null 或 非数 则保持原样）
+                  const _v = item.value ?? null;
+                  if (_v !== null && !isNaN(_v)) {
+                    item.value = parseInt(Number(_v), 10);
+                  } else {
+                    item.value = _v;
+                  }
+                }
+                // // 只有存在转换规则的key才需要处理
+                // if (conversionRules.hasOwnProperty(key)) {
+                //   const convert = conversionRules[key];
+                //   for (const item of items) {
+                //     const value = item.value ?? null; // 更严谨的空值处理
+                //     item.value = value !== null ? convert(value) : null;
+                //   }
+                // }
+              }
+            }
+            stationModelData.value = data;
+            console.log("stationModelData", stationModelData.value);
+          };
+
+          /**
+           * 处理时间序列数据的通用工具函数
+           * @param {Array} rawData - 原始数据数组
+           * @param {string} startTime - 开始时间
+           * @param {string} endTime - 结束时间
+           * @param {Function} valueGetter - 提取值的函数
+           * @returns {Array} 处理后的时间序列数据
+           */
+          const processTimeSeriesData = (
+            rawData,
+            startTime,
+            endTime,
+            valueGetter
+          ) => {
+            if (!Array.isArray(rawData)) return [];
+            let startTimestamp = new Date(startTime).getTime();
+            let endTimestamp = new Date(endTime).getTime();
+            return rawData
+              .filter((item) => {
+                let itemDate = new Date(item.date).getTime();
+                return itemDate >= startTimestamp && itemDate <= endTimestamp;
+              })
+              .sort((a, b) => a.date - b.date)
+              .map((item) => ({
+                date: item.date,
+                value: valueGetter(item),
+              }));
+          };
+
+          /**
+           * 获取监测数据
+           * @param {string} stationCode - 站点编码
+           * @param {string} startTime - 开始时间
+           * @param {string} endTime - 结束时间
+           * @param {string} pollutant - 污染物类型
+           * @returns {Array} 格式化的监测数据 [{date, value}, ...]
+           */
+          const getMonitorData = (
+            stationCode,
+            startTime,
+            endTime,
+            pollutant
+          ) => {
+            const rawData = allStationData.value[stationCode] ?? [];
+            console.log("rawData", rawData, allStationData.value);
+            return processTimeSeriesData(
+              rawData,
+              startTime,
+              endTime,
+              (item) => item[pollutant] // 提取监测值的逻辑
+            );
+          };
+
+          /**
+           * 获取模拟数据
+           * @param {string} stationCode - 站点编码
+           * @param {number} startTime - 开始时间戳
+           * @param {number} endTime - 结束时间戳
+           * @param {string} pollutant - 污染物类型
+           * @returns {Array} 格式化的模拟数据 [{date, value}, ...]
+           */
+          const getModelData = (stationCode, startTime, endTime, pollutant) => {
+            let modelName = pollutant == "PM2.5" ? "PM25_TOT" : pollutant;
+
+            // 使用可选链简化深层属性访问
+            const rawModelData =
+              stationModelData.value?.[stationCode]?.[modelName] ?? [];
+
+            return processTimeSeriesData(
+              rawModelData,
+              startTime,
+              endTime,
+              (item) => item.value // 提取模拟值的逻辑
+            );
+          };
+
+          /**
+           * 图表样式常量配置
+           */
+          const CHART_STYLES = {
+            title: {
+              text: "观测值与模拟值时间序列对比",
+              left: "center",
+              textStyle: { color: "#00eeff", fontSize: 18 },
+            },
+            legend: {
+              data: ["观测值", "模拟值"],
+              top: 35,
+              textStyle: { color: "#fff", fontSize: 16 },
+            },
+            grid: {
+              left: "5%",
+              right: "4%",
+              bottom: "8%",
+              containLabel: true,
+            },
+            axis: {
+              lineStyle: { color: "#00eeff" },
+              labelColor: "#fff",
+              splitLine: { lineStyle: { color: "rgba(0,238,255,0.1)" } },
+            },
+            series: {
+              monitor: {
+                name: "观测值",
+                lineStyle: { color: "#00eeff", width: 3 },
+                itemStyle: { color: "#00eeff" },
+              },
+              model: {
+                name: "模拟值",
+                lineStyle: { color: "#ffaa00", width: 3 },
+                itemStyle: { color: "#ffaa00" },
+              },
+            },
+          };
+
+          /**
+           * 获取时间序列图的配置项
+           * @param {Array} monitorData - 观测数据 [{date, value}, ...]
+           * @param {Array} modelData - 模拟数据 [{date, value}, ...]
+           * @returns {Object} ECharts配置项
+           */
+          const getStationChartOption = (monitorData, modelData) => {
+            // 处理空数据场景
+            const xData = monitorData.map((d) => d.date) || [];
+
+            return {
+              title: CHART_STYLES.title,
+              tooltip: {
+                trigger: "axis",
+                confine: true,
+                appendToBody: true,
+                extraCssText: "z-index: 9999",
+                axisPointer: {
+                  type: "line",
+                  lineStyle: {
+                    color: "rgba(255, 255, 255, 0.5)",
+                    type: "dashed",
+                  },
+                },
+              },
+              legend: CHART_STYLES.legend,
+              grid: CHART_STYLES.grid,
+              xAxis: {
+                type: "category",
+                boundaryGap: false,
+                data: xData,
+                axisLine: CHART_STYLES.axis.lineStyle,
+                axisLabel: {
+                  color: CHART_STYLES.axis.labelColor,
+                  fontSize: 10,
+                  formatter: (value) => value.replace('时', '')
+                },
+              },
+              yAxis: {
+                type: "value",
+                axisLine: CHART_STYLES.axis.lineStyle,
+                axisLabel: {
+                  color: CHART_STYLES.axis.labelColor,
+                  fontSize: 10,
+                },
+                splitLine: CHART_STYLES.axis.splitLine,
+                name: "微克/立方米",
+                nameTextStyle: {
+                  color: CHART_STYLES.axis.labelColor,
+                  fontSize: 10,
+                },
+                nameGap: 30,
+              },
+              series: [
+                {
+                  ...CHART_STYLES.series.monitor,
+                  type: "line",
+                  data: monitorData.map((d) => d.value) || [],
+                  smooth: true,
+                  symbol: "circle",
+                },
+                {
+                  ...CHART_STYLES.series.model,
+                  type: "line",
+                  data: modelData.map((d) => d.value) || [],
+                  smooth: true,
+                  symbol: "circle",
+                },
+              ],
+            };
+          };
+          const initStationChart = async () => {
+            if (!stationChart.value) {
+              stationChart.value = echarts.init(
+                stationChartContentRef.value,
+                "dark"
+              );
+            }
+
+            let stationCode = "1001A";
+            let startDate = "2024-11-04 00:00";
+            let endDate = "2024-11-23 23:00";
+            let pollutant = "PM2.5";
+            // let monitorData = getMonitorData(
+            //   stationCode,
+            //   startDate,
+            //   endDate,
+            //   pollutant
+            // );
+            // let modelData = getModelData(
+            //   stationCode,
+            //   startDate,
+            //   endDate,
+            //   pollutant
+            // );
+            // console.log("monitorData----",monitorData);
+            // console.log("modelData----",modelData);
+
+            const res = await fetch(
+              `./ctm_demo_resutl/ctm/task_results/stationChart_options.json`
+            ).then((res) => res.json());
+            const monitorData = res.monitorData || [];
+            const modelData = res.modelData || [];
+
+            let option = getStationChartOption(monitorData, modelData);
+            stationChart.value.setOption(option);
+          };
+          const updateMaskLayer = (ctx) => {
+            if (
+              !ctx.mapMarkersLayer.value ||
+              !ctx.baseMapCorners.value ||
+              ctx.baseMapCorners.value.length < 4
+            )
+              return;
+            let chinaArray = [
+              [56.132617308505615, 40.98666927775727],
+              [56.132617308505615, 169.01333072224276],
+              [-1.7735081079264696, 135.08644966659034],
+              [-1.7735081079264696, 74.91355033340966],
+              [56.132617308505615, 40.98666927775727],
+            ];
+            let targetArray = [
+              [ctx.baseMapCorners.value[0][1], ctx.baseMapCorners.value[0][0]],
+              [ctx.baseMapCorners.value[1][1], ctx.baseMapCorners.value[1][0]],
+              [ctx.baseMapCorners.value[3][1], ctx.baseMapCorners.value[3][0]],
+              [ctx.baseMapCorners.value[2][1], ctx.baseMapCorners.value[2][0]],
+              [ctx.baseMapCorners.value[0][1], ctx.baseMapCorners.value[0][0]],
+            ];
+            console.log("目标区域坐标:", targetArray);
+            var plyall = L.polygon([chinaArray, targetArray], {
+              color: "transparent",
+              fillColor: "#0a0a2a",
+              fillOpacity: 1,
+            });
+            ctx.mapMarkersLayer.value.clearLayers();
+            ctx.mapMarkersLayer.value.addLayer(plyall);
+            if (ctx.mapInstance.value && ctx.mapBounds.value) {
+              ctx.mapInstance.value.fitBounds(ctx.mapBounds.value, { maxZoom: 18 });
+            }
+          };
+          const handleMap = async (ctx) => {
+            await loadMapData(ctx);
+            initMap(ctx);
+            await drawBaseMap(ctx);
+            updateMaskLayer(ctx);
+            focusOnDomain(ctx);
+          };
+          const handleChart = async () => {
+            // await Promise.all([getStationData(), getStationModelData()]);
+            await initStationChart();
+          };
+          const PM25_DICT = {
+            PM25_CL: "氯离子",
+            PM25_EC: "元素碳",
+            PM25_NA: "钠离子",
+            PM25_MG: "镁离子",
+            PM25_K: "钾离子",
+            PM25_CA: "钙离子",
+            PM25_NH4: "铵离子",
+            PM25_NO3: "硝酸盐",
+            PM25_OC: "有机碳",
+            PM25_OM: "有机物",
+            PM25_POM: "一次有机物",
+            PM25_SOM: "二次有机物",
+            PM25_SO4: "硫酸盐",
+            PM25_TOT: "总质量浓度",
+          };
+
+          const handlePMChart = async () => {
+            try {
+              if (!pm25ComponentChart.value) {
+                pm25ComponentChart.value = echarts.init(
+                  pm25ComponentRef.value,
+                  "dark"
+                );
+              }
+              
+              // const time = "2024-10-28 00:00:00";
+              // let data = await fetch(
+              //   `./ctm_demo_resutl/ctm/1_layer_data_cn03_model_avg.json`
+              // ).then((res) => res.json());
+              // const MAIN_KEYS = [
+              //   "PM25_EC",
+              //   "PM25_OM",
+              //   "PM25_NO3",
+              //   "PM25_SO4",
+              //   "PM25_NH4",
+              //   "PM25_CL",
+              // ];
+              // const mainResults = [];
+              // let otherSum = 0;
+              // let otherCount = 0;
+              // for (var item of data) {
+              //   const { pollutant, date, value } = item;
+              //   if (date != time || !pollutant.includes("PM25_")) continue;
+              //   if (MAIN_KEYS.includes(pollutant)) {
+              //     mainResults.push({
+              //       key: pollutant,
+              //       name: PM25_DICT[pollutant],
+              //       value: Number(value.toFixed(2)),
+              //     });
+              //   } else {
+              //     otherSum += value;
+              //     otherCount++;
+              //   }
+              // }
+              // // 计算“其他”组分
+              // mainResults.push({
+              //   key: "OTHER",
+              //   name: "其他",
+              //   value: Number((otherSum / otherCount).toFixed(2)),
+              // });
+              // const totalValue = mainResults.reduce(
+              //   (sum, item) => sum + item.value,
+              //   0
+              // );
+              // if (totalValue == 0) return;
+              // const filteredData = mainResults.filter((item) => item.value > 0);
+              // console.log("filteredData---", filteredData);
+
+
+              const filteredData = await fetch(
+                `./ctm_demo_resutl/ctm/task_results/pm25ComponentChart_options.json`
+              ).then((res) => res.json());
+
+              let option = {
+                backgroundColor: "transparent",
+                tooltip: {
+                  trigger: "item",
+                  formatter: "{b}: {c} ({d}%)",
+                  textStyle: {
+                    fontSize: 14,
+                  },
+                },
+                legend: {
+                  orient: "vertical",
+                  right: 8,
+                  top: "middle",
+                  textStyle: { color: "#fff", fontSize: 12 },
+                  icon: "circle",
+                  itemWidth: 12,
+                  itemHeight: 12,
+                  itemGap: 10,
+                },
+                series: [
+                  {
+                    type: "pie",
+                    radius: ["40%", "70%"],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                      borderRadius: 8,
+                      borderColor: "rgba(10, 20, 50, 0.8)",
+                      borderWidth: 2,
+                    },
+                    label: {
+                      color: "#fff",
+                      formatter: "{b}: {d}%",
+                      textStyle: {
+                        fontSize: 16, // 设置tooltip字体大小为16px
+                      },
+                    },
+                    labelLine: {
+                      lineStyle: { color: "rgba(255, 255, 255, 0.6)" },
+                    },
+                    data: filteredData.length ? filteredData : data,
+                  },
+                ],
+              };
+              pm25ComponentChart.value.setOption(option);
+            } catch (error) {
+              console.error("获取PM2.5组分数据失败:", error);
+            } finally {
+            }
+          };
+          onMounted(async () => {
+            let loading = ElLoading.service({
+              target: ".results-container",
+              text: "数据加载中...",
+              background: "rgba(0, 0, 0, 0.8)",
+            });
+            await nextTick();
+            await Promise.all([
+              handleMap(emissionMapCtx),
+              handleMap(spatialMapCtx),
+              handleChart(),
+              handlePMChart(),
+            ]);
+
+            loading.close();
+          });
+
+          onUnmounted(() => {
+            [emissionMapCtx, spatialMapCtx].forEach((ctx) => {
+              if (ctx.mapInstance.value) {
+                ctx.mapInstance.value.remove();
+                ctx.mapInstance.value = null;
+              }
+            });
+            if (stationChart.value) {
+              stationChart.value.dispose();
+              stationChart.value = null;
+            }
+          });
+
+          return {
+            emissionMapContentRef,
+            spatialMapContentRef,
+            stationChartContentRef,
+            pm25ComponentRef,
+            openDetailModule,
+          };
+        },
+      }).mount("#app");
+    </script>
+    
+  </body>
+</html>

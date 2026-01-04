@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>任务管理 - 京津冀新一代大气环境智能模型系统（NEXT+）</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Microsoft YaHei", Arial, sans-serif;
+        background: #0a0a2a;
+        color: #fff;
+        min-height: 100vh;
+        overflow-x: hidden;
+        margin: 0;
+        padding: 0;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 20px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* 头部导航区域 */
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 30px;
+        background: rgba(25, 35, 70, 0.9);
+        border-radius: 10px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(0, 238, 255, 0.3);
+        box-shadow: 0 5px 20px rgba(0, 238, 255, 0.2);
+      }
+
+      .logo-section {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .platform-name {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #00eeff;
+        text-shadow: 0 0 10px rgba(0, 238, 255, 0.5);
+      }
+
+      .nav-menu {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+      }
+
+      .nav-item {
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        padding: 8px 15px;
+        border-radius: 20px;
+      }
+
+      .nav-item:hover,
+      .nav-item.active {
+        color: #00eeff;
+        background: rgba(0, 238, 255, 0.2);
+      }
+
+      /* 下拉菜单样式 */
+      .nav-dropdown {
+        position: relative;
+        display: inline-block;
+        vertical-align: top;
+      }
+
+      .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: rgba(25, 35, 70, 0.95);
+        border-radius: 10px;
+        padding: 10px 0;
+        border: 1px solid rgba(0, 238, 255, 0.3);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(5px);
+        min-width: 150px;
+        z-index: 1000;
+      }
+
+      .nav-dropdown:hover .dropdown-menu {
+        display: block;
+      }
+
+      .dropdown-item {
+        display: block;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        padding: 8px 20px;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+      }
+
+      .dropdown-item:hover {
+        color: #00eeff;
+        background: rgba(0, 238, 255, 0.2);
+      }
+
+      .dropdown-item.active {
+        color: #00eeff;
+        background: rgba(0, 238, 255, 0.2);
+      }
+
+      .dropdown-toggle::after {
+        content: " ▼";
+        font-size: 0.7em;
+        margin-left: 5px;
+        vertical-align: middle;
+      }
+
+      .user-section {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #00eeff, #0088ff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #0a0a2a;
+      }
+
+      .username {
+        font-weight: bold;
+        color: #00eeff;
+      }
+
+      /* 页面标题 */
+      .page-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .page-title {
+        font-size: 2.5rem;
+        color: #00eeff;
+        text-shadow: 0 0 15px rgba(0, 238, 255, 0.7);
+        margin-bottom: 10px;
+      }
+
+      .page-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      /* 功能栏 */
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        background: rgba(25, 35, 70, 0.8);
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(0, 238, 255, 0.3);
+      }
+
+      .search-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .search-input {
+        padding: 10px 15px;
+        border-radius: 20px;
+        border: 1px solid rgba(0, 238, 255, 0.3);
+        background: rgba(20, 30, 60, 0.8);
+        color: #fff;
+        width: 200px;
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: #00eeff;
+        box-shadow: 0 0 10px rgba(0, 238, 255, 0.5);
+      }
+
+      .search-btn {
+        padding: 10px 20px;
+        border-radius: 20px;
+        border: none;
+        background: linear-gradient(45deg, #00eeff, #0088ff);
+        color: #0a0a2a;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .search-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 238, 255, 0.4);
+      }
+
+      .filter-options {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .filter-select {
+        padding: 8px 12px;
+        border-radius: 15px;
+        border: 1px solid rgba(0, 238, 255, 0.3);
+        background: rgba(20, 30, 60, 0.8);
+        color: #fff;
+        cursor: pointer;
+      }
+
+      /* 任务表格 */
+      .task-table-container {
+        background: rgba(25, 35, 70, 0.8);
+        border-radius: 15px;
+        border: 1px solid rgba(0, 238, 255, 0.3);
+        overflow: hidden;
+        margin-bottom: 30px;
+      }
+
+      .task-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .task-table th {
+        background: rgba(40, 50, 90, 0.9);
+        padding: 15px 10px;
+        text-align: left;
+        color: #00eeff;
+        font-weight: bold;
+        border-bottom: 2px solid rgba(0, 238, 255, 0.3);
+        white-space: nowrap;
+      }
+
+      .task-table td {
+        padding: 12px 10px;
+        border-bottom: 1px solid rgba(0, 238, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .task-table tbody tr {
+        transition: all 0.3s ease;
+      }
+
+      .task-table tbody tr:hover {
+        background: rgba(0, 238, 255, 0.1);
+      }
+
+      /* 状态标签 */
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        text-align: center;
+        min-width: 80px;
+        display: inline-block;
+      }
+
+      .status-success {
+        background: linear-gradient(45deg, #00ff88, #00cc66);
+        color: #0a0a2a;
+      }
+
+      .status-failed {
+        background: linear-gradient(45deg, #ff4444, #cc0000);
+        color: #fff;
+      }
+
+      .status-running {
+        background: linear-gradient(45deg, #ffaa00, #ff8800);
+        color: #0a0a2a;
+      }
+
+      /* 操作按钮 */
+      .action-buttons {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+
+      .action-btn {
+        padding: 4px 8px;
+        border-radius: 12px;
+        border: none;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .btn-view {
+        background: rgba(0, 238, 255, 0.3);
+        color: #00eeff;
+        border: 1px solid rgba(0, 238, 255, 0.5);
+      }
+
+      .btn-edit {
+        background: rgba(255, 170, 0, 0.3);
+        color: #ffaa00;
+        border: 1px solid rgba(255, 170, 0, 0.5);
+      }
+
+      .btn-delete {
+        background: rgba(255, 68, 68, 0.3);
+        color: #ff4444;
+        border: 1px solid rgba(255, 68, 68, 0.5);
+      }
+
+      .btn-download {
+        background: rgba(0, 255, 136, 0.3);
+        color: #00ff88;
+        border: 1px solid rgba(0, 255, 136, 0.5);
+      }
+
+      .btn-result {
+        background: linear-gradient(45deg, #00eeff, #0099cc) !important;
+        color: white !important;
+        border: 1px solid rgba(0, 238, 255, 0.8) !important;
+        font-weight: bold;
+      }
+
+      .btn-result:hover {
+        background: linear-gradient(45deg, #0099cc, #00eeff) !important;
+        box-shadow: 0 5px 15px rgba(0, 238, 255, 0.4) !important;
+      }
+
+      .action-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0, 238, 255, 0.3);
+      }
+
+      /* 分页 */
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .pagination-btn {
+        padding: 8px 15px;
+        border-radius: 20px;
+        border: 1px solid rgba(0, 238, 255, 0.3);
+        background: rgba(20, 30, 60, 0.8);
+        color: rgba(255, 255, 255, 0.8);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+      }
+
+      .pagination-btn:hover,
+      .pagination-btn.active {
+        background: rgba(0, 238, 255, 0.2);
+        color: #00eeff;
+        border-color: #00eeff;
+      }
+
+      /* 响应式设计 */
+      @media (max-width: 1200px) {
+        .container {
+          padding: 15px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 10px;
+        }
+
+        header {
+          flex-direction: column;
+          gap: 15px;
+          padding: 15px;
+        }
+
+        .logo-section {
+          justify-content: center;
+        }
+
+        .nav-menu {
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 15px;
+        }
+
+        .user-section {
+          justify-content: center;
+        }
+
+        .toolbar {
+          flex-direction: column;
+          gap: 15px;
+        }
+
+        .task-table-container {
+          overflow-x: auto;
+        }
+
+        .task-table {
+          min-width: 800px;
+        }
+
+        .action-buttons {
+          flex-direction: column;
+          gap: 2px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 5px;
+        }
+
+        .page-title {
+          font-size: 2rem;
+        }
+
+        .search-input {
+          width: 150px;
+        }
+
+        .task-table th,
+        .task-table td {
+          padding: 8px 5px;
+          font-size: 0.9rem;
+        }
+      }
+
+      footer {
+        text-align: center;
+        padding: 30px 0;
+        margin-top: auto;
+        border-top: 1px solid rgba(0, 238, 255, 0.2);
+        opacity: 0.8;
+        color: #00eeff;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <!-- 头部导航 -->
+      <header>
+        <div class="logo-section">
+          <!-- <div class="logo">🌍</div> -->
+          <div class="platform-name">
+            京津冀新一代大气环境智能模型系统（NEXT+）
+          </div>
+        </div>
+
+        <nav class="nav-menu">
+          <a href="index.html" class="nav-item active">首页</a>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-item dropdown-toggle">应用场景</a>
+            <div class="dropdown-menu">
+              <a href="#" class="dropdown-item">空气质量预报</a>
+              <a href="#" class="dropdown-item">重污染应对</a>
+              <a href="long-term-planning-setup.html" class="dropdown-item"
+                >中长期规划</a
+              >
+            </div>
+          </div>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-item dropdown-toggle">模型集成</a>
+            <div class="dropdown-menu">
+              <a href="#" class="dropdown-item">气象模型</a>
+              <a href="#" class="dropdown-item">排放清单</a>
+              <a href="cmaq-setup-wizard.html" class="dropdown-item"
+                >化学传输</a
+              >
+              <a href="#" class="dropdown-item">溯源模型</a>
+              <a href="#" class="dropdown-item">预报模型</a>
+              <a href="#" class="dropdown-item">调控模型</a>
+            </div>
+          </div>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-item dropdown-toggle">任务调度</a>
+            <div class="dropdown-menu">
+              <a href="task-management.html" class="dropdown-item">任务管理</a>
+              <a href="#" class="dropdown-item">定时任务</a>
+              <a href="#" class="dropdown-item">实时调度</a>
+              <a href="#" class="dropdown-item">性能监控</a>
+            </div>
+          </div>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-item dropdown-toggle">数据分析</a>
+            <div class="dropdown-menu">
+              <a href="#" class="dropdown-item">数据可视化</a>
+              <a href="#" class="dropdown-item">统计分析</a>
+              <a href="#" class="dropdown-item">趋势预测</a>
+              <a href="#" class="dropdown-item">报告生成</a>
+            </div>
+          </div>
+        </nav>
+
+        <div class="user-section">
+          <div class="user-info">
+            <div class="user-avatar">U</div>
+            <div class="username">
+              用户: <span id="current-user">admin</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 页面标题 -->
+      <div class="page-header">
+        <h1 class="page-title">任务管理</h1>
+        <p class="page-subtitle">管理和监控模型计算任务的执行状态</p>
+      </div>
+
+      <!-- 功能栏 -->
+      <div class="toolbar">
+        <div class="search-box">
+          <input type="text" class="search-input" placeholder="关键词..." />
+          <button class="search-btn">搜索</button>
+        </div>
+        <div class="filter-options">
+          <select class="filter-select">
+            <option value="">任务类型</option>
+            <option value="chemical">化学传输</option>
+            <option value="weather">气象模拟</option>
+            <option value="emission">排放清单</option>
+          </select>
+          <select class="filter-select">
+            <option value="">状态</option>
+            <option value="success">成功</option>
+            <option value="failed">失败</option>
+            <option value="running">运行中</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 任务表格 -->
+      <div class="task-table-container">
+        <table class="task-table">
+          <thead>
+            <tr>
+              <th>任务ID</th>
+              <th>任务名称</th>
+              <th>类型</th>
+              <th>开始时间</th>
+              <th>结束时间</th>
+              <th>运行时间</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="task-tbody">
+            <!-- 任务数据将通过JavaScript动态加载 -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 分页 -->
+      <div class="pagination">
+        <a href="#" class="pagination-btn">上一页</a>
+        <a href="#" class="pagination-btn active">1</a>
+        <a href="#" class="pagination-btn">2</a>
+        <a href="#" class="pagination-btn">3</a>
+        <a href="#" class="pagination-btn">下一页</a>
+      </div>
+
+      <footer>
+        <p>
+          京津冀新一代大气环境智能模型系统（NEXT+） ©2025 Created by SCUT Team
+        </p>
+        <p>高效管理 · 精准监控</p>
+      </footer>
+    </div>
+
+    <script>
+      const DEMO_MIN_DURATION_MS = 3000;
+      const DEMO_MAX_DURATION_MS = 4000;
+      const demoCompletionTimers = new Map();
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化任务数据
+        initializeTasks();
+        loadTasks();
+
+        // 搜索功能
+        const searchBtn = document.querySelector(".search-btn");
+        const searchInput = document.querySelector(".search-input");
+
+        searchBtn.addEventListener("click", function () {
+          const keyword = searchInput.value.trim();
+          if (keyword) {
+            console.log("搜索关键词:", keyword);
+            alert("搜索功能：" + keyword);
+          }
+        });
+
+        // 回车搜索
+        searchInput.addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            searchBtn.click();
+          }
+        });
+
+        // 筛选功能
+        const filterSelects = document.querySelectorAll(".filter-select");
+        filterSelects.forEach((select) => {
+          select.addEventListener("change", function () {
+            console.log("筛选条件改变:", this.value);
+          });
+        });
+
+        // 分页功能
+        document.querySelectorAll(".pagination-btn").forEach((btn) => {
+          btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            document
+              .querySelectorAll(".pagination-btn")
+              .forEach((b) => b.classList.remove("active"));
+            this.classList.add("active");
+            console.log("跳转到页面:", this.textContent);
+          });
+        });
+      });
+
+      // 初始化默认任务数据
+      function initializeTasks() {
+        const existingTasks = localStorage.getItem("simulationTasks");
+        if (!existingTasks) {
+          const defaultTasks = [
+            {
+              id: 3,
+              name: "减排情景化",
+              type: "减排情景化",
+              startTime: "2024-09-02 08:27:00",
+              endTime: "2024-09-02 09:10:00",
+              executionTime: 2580,
+              status: "Succeeded",
+            },
+            {
+              id: 2,
+              name: "JJJ 1-26",
+              type: "一体化流程",
+              startTime: "2024-09-02 08:15:00",
+              endTime: "2024-09-02 09:05:00",
+              executionTime: 3000,
+              status: "Succeeded",
+              flow: "integrated",
+            },
+            {
+              id: 1,
+              name: "China",
+              type: "一体化流程",
+              startTime: "2024-09-02 08:01:00",
+              endTime: "2024-09-02 08:53:00",
+              executionTime: 3000,
+              status: "Succeeded",
+              flow: "integrated",
+            },
+            {
+              id: 68,
+              name: "test1",
+              type: "一体化流程",
+              startTime: "2025-09-14 16:22:13",
+              endTime: "2025-09-14 16:22:13",
+              executionTime: "-",
+              status: "Failed",
+            },
+            {
+              id: 59,
+              name: "test0",
+              type: "一体化流程",
+              startTime: "2025-09-13 22:36:06",
+              endTime: "2025-09-16 21:16:04",
+              executionTime: 256199,
+              status: "Failed",
+            },
+          ];
+          localStorage.setItem("simulationTasks", JSON.stringify(defaultTasks));
+        }
+      }
+
+      // 加载任务数据
+      function loadTasks() {
+        const tasks = JSON.parse(
+          localStorage.getItem("simulationTasks") || "[]"
+        );
+        handleDemoTaskLifecycle(tasks);
+        const tbody = document.getElementById("task-tbody");
+        tbody.innerHTML = "";
+
+        // 检查是否有新任务创建
+        if (localStorage.getItem("newTaskCreated") === "true") {
+          localStorage.removeItem("newTaskCreated");
+          // 可以在这里添加新任务提示
+        }
+
+        tasks.forEach((task) => {
+          const row = createTaskRow(task);
+          tbody.appendChild(row);
+        });
+
+        // 重新绑定事件
+        bindTaskEvents();
+      }
+
+      function handleDemoTaskLifecycle(tasks) {
+        const now = Date.now();
+        const schedules = [];
+        let mutated = false;
+
+        tasks.forEach((task) => {
+          if (!isDemoAutoTask(task)) {
+            return;
+          }
+
+          if (task.status === "Pending") {
+            const duration = getRandomDemoDuration();
+            task.status = "Running";
+            task.endTime = "-";
+            task.executionTime = "运行中...";
+            task.demoDurationMs = duration;
+            task.demoAutoCompleteAt = now + duration;
+            schedules.push({ id: task.id, delay: duration });
+            mutated = true;
+          } else if (
+            task.status === "Running" &&
+            typeof task.demoAutoCompleteAt === "number"
+          ) {
+            const remaining = task.demoAutoCompleteAt - now;
+            if (remaining <= 0) {
+              cancelDemoCompletionTimer(task.id);
+              finalizeDemoTaskObject(task);
+              mutated = true;
+            } else {
+              if (!task.demoDurationMs) {
+                task.demoDurationMs = task.demoAutoCompleteAt - now;
+                mutated = true;
+              }
+              if (!task.executionTime || task.executionTime === "0") {
+                task.executionTime = "运行中...";
+                mutated = true;
+              }
+              schedules.push({ id: task.id, delay: remaining });
+            }
+          }
+        });
+
+        if (mutated) {
+          localStorage.setItem("simulationTasks", JSON.stringify(tasks));
+        }
+
+        schedules.forEach(({ id, delay }) => scheduleDemoCompletion(id, delay));
+      }
+
+      function finalizeDemoTaskObject(task) {
+        const duration = Math.round(
+          task.demoDurationMs || getRandomDemoDuration()
+        );
+        task.status = "Succeeded";
+        task.endTime = new Date().toLocaleString();
+        task.executionTime = `${duration} ms`;
+        delete task.demoAutoCompleteAt;
+        delete task.demoDurationMs;
+      }
+
+      function scheduleDemoCompletion(taskId, delay) {
+        const key = taskId.toString();
+        if (demoCompletionTimers.has(key)) {
+          clearTimeout(demoCompletionTimers.get(key));
+        }
+        demoCompletionTimers.set(
+          key,
+          setTimeout(() => {
+            demoCompletionTimers.delete(key);
+            completeDemoTask(taskId);
+          }, Math.max(delay, 0))
+        );
+      }
+
+      function completeDemoTask(taskId) {
+        const tasks = JSON.parse(
+          localStorage.getItem("simulationTasks") || "[]"
+        );
+        const task = tasks.find(
+          (item) => item.id.toString() === taskId.toString()
+        );
+        if (!task) {
+          return;
+        }
+        finalizeDemoTaskObject(task);
+        localStorage.setItem("simulationTasks", JSON.stringify(tasks));
+        loadTasks();
+      }
+
+      function cancelDemoCompletionTimer(taskId) {
+        const key = taskId.toString();
+        if (demoCompletionTimers.has(key)) {
+          clearTimeout(demoCompletionTimers.get(key));
+          demoCompletionTimers.delete(key);
+        }
+      }
+
+      function getRandomDemoDuration() {
+        return (
+          Math.floor(
+            Math.random() * (DEMO_MAX_DURATION_MS - DEMO_MIN_DURATION_MS + 1)
+          ) + DEMO_MIN_DURATION_MS
+        );
+      }
+
+      function isDemoAutoTask(task) {
+        if (!task) {
+          return false;
+        }
+        if (task.flow && (task.flow === "integrated" || task.flow === "optimized")) {
+          return true;
+        }
+        if (typeof task.type === "string") {
+          return (
+            task.type.indexOf("一体化评估流程") !== -1 ||
+            task.type.indexOf("减排路径优化") !== -1
+          );
+        }
+        return false;
+      }
+
+      // 创建任务行
+      function createTaskRow(task) {
+        const row = document.createElement("tr");
+        const statusClass = getStatusClass(task.status);
+        const statusText = getStatusText(task.status);
+
+        row.dataset.flow = task.flow ? task.flow : "";
+
+        row.innerHTML = `
+                <td>${task.id}</td>
+                <td>${task.name}</td>
+                <td>${task.type}</td>
+                <td>${task.startTime}</td>
+                <td>${task.endTime || "-"}</td>
+                <td>${
+                  task.executionTime !== undefined && task.executionTime !== null
+                    ? task.executionTime
+                    : "-"
+                }</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="#" class="action-btn btn-view" data-action="详情">详情</a>
+                        <a href="#" class="action-btn btn-edit" data-action="编辑">编辑</a>
+                        ${
+                          task.status === "Succeeded"
+                            ? '<a href="#" class="action-btn btn-result" data-action="查看结果" style="background: linear-gradient(45deg, #00eeff, #0099cc); color: white;">查看结果</a>'
+                            : '<a href="#" class="action-btn btn-download" data-action="下载">下载</a>'
+                        }
+                        <a href="#" class="action-btn btn-delete" data-action="删除">删除</a>
+                    </div>
+                </td>
+            `;
+
+        // 添加悬停效果
+        row.addEventListener("mouseenter", function () {
+          this.style.transform = "translateX(3px)";
+        });
+
+        row.addEventListener("mouseleave", function () {
+          this.style.transform = "translateX(0)";
+        });
+
+        return row;
+      }
+
+      // 绑定任务事件
+      function bindTaskEvents() {
+        document.querySelectorAll(".action-btn").forEach((btn) => {
+          btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            const action = this.getAttribute("data-action");
+            const row = this.closest("tr");
+            const taskId = row.cells[0].textContent;
+            const taskName = row.cells[1].textContent;
+            const taskType = row.cells[2].textContent;
+            const executionTime = row.cells[5].textContent;
+            const taskFlow = row.dataset.flow || "";
+
+            switch (action) {
+              case "详情":
+                alert(`查看任务详情：${taskName} (ID: ${taskId})`);
+                break;
+              case "编辑":
+                alert(`编辑任务：${taskName} (ID: ${taskId})`);
+                break;
+              case "删除":
+                if (confirm(`确定要删除任务"${taskName}"吗？`)) {
+                  deleteTask(taskId);
+                }
+                break;
+              case "下载":
+                alert(`下载任务结果：${taskName} (ID: ${taskId})`);
+                break;
+              case "查看结果":
+                viewTaskResults(
+                  taskId,
+                  taskName,
+                  taskType,
+                  executionTime,
+                  taskFlow
+                );
+                break;
+            }
+          });
+        });
+      }
+
+      // 查看任务结果
+      function viewTaskResults(
+        taskId,
+        taskName,
+        taskType,
+        executionTime,
+        taskFlow
+      ) {
+        const params = new URLSearchParams({
+          taskId: taskId,
+          taskName: taskName,
+          taskType: taskType,
+          executionTime: executionTime,
+        });
+        if (taskFlow) {
+          params.set("flow", taskFlow);
+        }
+        const isIntegratedFlow =
+          taskFlow === "integrated" ||
+          (typeof taskType === "string" && taskType.indexOf("一体化") !== -1);
+        const isOptimizedFlow =
+          taskFlow === "optimized" ||
+          (typeof taskType === "string" && taskType.indexOf("减排路径优化") !== -1);
+        const targetPage = isIntegratedFlow
+          ? "long-term-planning.html"
+          : isOptimizedFlow
+          ? "long-term-planning_path_optimized.html"
+          : "task-results.html";
+        window.location.href = `${targetPage}?${params.toString()}`;
+      }
+
+      // 删除任务
+      function deleteTask(taskId) {
+        let tasks = JSON.parse(localStorage.getItem("simulationTasks") || "[]");
+        tasks = tasks.filter(
+          (task) => task.id.toString() !== taskId.toString()
+        );
+        localStorage.setItem("simulationTasks", JSON.stringify(tasks));
+        cancelDemoCompletionTimer(taskId);
+        loadTasks(); // 重新加载任务列表
+        alert("任务删除成功");
+      }
+
+      // 获取状态样式类
+      function getStatusClass(status) {
+        switch (status) {
+          case "Succeeded":
+            return "status-success";
+          case "Failed":
+            return "status-failed";
+          case "Running":
+            return "status-running";
+          default:
+            return "status-pending";
+        }
+      }
+
+      // 获取状态文本
+      function getStatusText(status) {
+        return status;
+      }
+
+      // 模拟任务状态更新（用于演示从Running到Succeeded的变化）
+      setInterval(function () {
+        let tasks = JSON.parse(localStorage.getItem("simulationTasks") || "[]");
+        let updated = false;
+
+        tasks.forEach((task) => {
+          if (task.status === "Running" && !task.demoAutoCompleteAt) {
+            // 模拟任务完成
+            const now = new Date();
+            task.status = "Succeeded";
+            task.endTime = now.toLocaleString();
+            task.executionTime = Math.floor(Math.random() * 3600) + 1800; // 30分钟到1.5小时
+            updated = true;
+          }
+        });
+
+        if (updated) {
+          localStorage.setItem("simulationTasks", JSON.stringify(tasks));
+          loadTasks();
+        }
+      }, 5000); // 每5秒检查一次
+    </script>
+  </body>
+</html>
