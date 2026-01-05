@@ -1,7 +1,7 @@
 // import axios from 'axios';
 // import qs from '../utils/qs.js';
 
-const VITE_CMAQ_API_BASE_URL = "/"
+const VITE_CMAQ_API_BASE_URL = "http://10.100.30.5"
 // const VITE_CMAQ_API_BASE_URL = 'http://localhost:8010'
 // const VITE_CMAQ_API_BASE_URL = "http://10.8.0.91"
 // const VITE_APP_API_TIMEOUT = 120000

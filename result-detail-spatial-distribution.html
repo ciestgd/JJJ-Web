@@ -579,7 +579,7 @@
                 ref="threeDFrameRef"
                 :style="{ display: threeDFrameVisible ? 'block' : 'none' }"
                 v-show="threeDFrameVisible"
-                src="/ueWeb/#/index"
+                src="http://10.100.30.5/ueWeb/#/index"
                 frameborder="0"
               ></iframe>
               <div class="check-content">
@@ -1029,9 +1029,10 @@
           const handleMapDraw = async ({ isPlayback = false } = {}) => {
             if (threeDMapSelect.value) {
               // 3D 模式下，避免在连播时每帧都重新拉取和绘制重型 3D 图层
-              if (!isPlayback) {
+              /* if (!isPlayback) {
                 await threeDMapLayerChange();
-              }
+              } */
+              await threeDMapLayerChange();
             } else {
               // 2D 地图：每帧都更新主底图
               drawBaseMap();

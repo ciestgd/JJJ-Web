@@ -2,7 +2,7 @@
 // import qs from '../utils/qs.js';
 
 // const VITE_RSM_API_BASE_URL = "https://next-gen-jjj.hycx-gd.cn/api/";// "/";
-const VITE_RSM_API_BASE_URL = "/";
+const VITE_RSM_API_BASE_URL = "http://10.100.30.5";
 const VITE_APP_API_TIMEOUT = 120000;
 
 const service = axios.create({
